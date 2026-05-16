@@ -1,0 +1,478 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum UoMType {
+  NUMERIC_MIN
+  NUMERIC_MAX
+  PERCENTAGE_MIN
+  PERCENTAGE_MAX
+  TIMELINE
+  ZERO_BASED
+}
+
+enum GoalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REWORK
+}
+
+enum CheckinStatus {
+  NOT_STARTED
+  ON_TRACK
+  AT_RISK
+  COMPLETED
+}
+
+enum CyclePhase {
+  GOAL_SETTING
+  Q1_CHECKIN
+  Q2_CHECKIN
+  Q3_CHECKIN
+  Q4_ANNUAL
+  CLOSED
+}
+
+enum EscalationTrigger {
+  GOAL_NOT_SUBMITTED
+  GOAL_NOT_APPROVED
+  CHECKIN_NOT_COMPLETED
+}
+
+enum EscalationStatus {
+  PENDING
+  NOTIFIED
+  RESOLVED
+  ESCALATED
+}
+
+enum AuditAction {
+  CREATED
+  UPDATED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  UNLOCKED
+  LOCKED
+  ACHIEVEMENT_LOGGED
+  CHECKIN_ADDED
+  SHARED_GOAL_PUSHED
+  WEIGHTAGE_UPDATED
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  thrustAreas ThrustArea[]
+
+  @@map("departments")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  emailVerified   DateTime?
+  image           String?
+  name            String
+  employeeCode    String    @unique
+  passwordHash String?
+  role         Role      @default(EMPLOYEE)
+  isActive     Boolean   @default(true)
+  azureAdId    String?   @unique
+  profilePicUrl String?
+  designation  String?
+  joiningDate  DateTime?
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  managerId     String?
+  manager       User?   @relation("ReportsTo", fields: [managerId], references: [id])
+  directReports User[]  @relation("ReportsTo")
+
+  accounts Account[]
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  goalSheets          GoalSheet[]
+  managedGoalSheets   GoalSheet[]      @relation("ManagedBy")
+  checkinComments     CheckinComment[] @relation("AddedByManager")
+  auditLogsCreated    AuditLog[]       @relation("CreatedByUser")
+  auditLogsAffected   AuditLog[]       @relation("AffectedUser")
+  escalationsEmployee EscalationLog[]  @relation("EscalationEmployee")
+  escalationsManager  EscalationLog[]  @relation("EscalationManager")
+  sharedGoalsPushed   SharedGoal[]     @relation("PushedBy")
+  notifications       Notification[]
+
+  @@index([departmentId])
+  @@index([managerId])
+  @@index([role])
+  @@map("users")
+}
+
+model GoalCycle {
+  id        String  @id @default(cuid())
+  name      String
+  fiscalYear String
+  isActive  Boolean @default(false)
+
+  goalSettingStart DateTime
+  goalSettingEnd   DateTime
+
+  q1WindowStart DateTime
+  q1WindowEnd   DateTime
+
+  q2WindowStart DateTime
+  q2WindowEnd   DateTime
+
+  q3WindowStart DateTime
+  q3WindowEnd   DateTime
+
+  q4WindowStart DateTime
+  q4WindowEnd   DateTime
+
+  currentPhase CyclePhase @default(GOAL_SETTING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  goalSheets  GoalSheet[]
+  sharedGoals SharedGoal[]
+
+  @@map("goal_cycles")
+}
+
+model ThrustArea {
+  id           String       @id @default(cuid())
+  name         String
+  description  String?
+  color        String       @default("#6366f1")
+  isActive     Boolean      @default(true)
+  order        Int          @default(0)
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  goals        Goal[]
+  sharedGoals  SharedGoal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+  @@map("thrust_areas")
+}
+
+model GoalSheet {
+  id         String     @id @default(cuid())
+  status     GoalStatus @default(DRAFT)
+  employeeId String
+  employee   User       @relation(fields: [employeeId], references: [id])
+  managerId  String?
+  manager    User?      @relation("ManagedBy", fields: [managerId], references: [id])
+  cycleId    String
+  cycle      GoalCycle  @relation(fields: [cycleId], references: [id])
+
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+
+  managerNote String?
+
+  isLocked Boolean   @default(false)
+  lockedAt DateTime?
+  lockedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  goals           Goal[]
+  auditLogs       AuditLog[]
+  checkinComments CheckinComment[]
+
+  @@unique([employeeId, cycleId])
+  @@index([employeeId])
+  @@index([managerId])
+  @@index([cycleId])
+  @@index([status])
+  @@map("goal_sheets")
+}
+
+model Goal {
+  id          String    @id @default(cuid())
+  goalSheetId String
+  goalSheet   GoalSheet @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+
+  thrustAreaId String
+  thrustArea   ThrustArea @relation(fields: [thrustAreaId], references: [id])
+
+  title       String
+  description String?
+  uomType     UoMType
+
+  plannedTarget  Float
+  targetDeadline DateTime?
+  unit           String?
+
+  weightage Float
+  order     Int     @default(0)
+
+  isShared     Boolean     @default(false)
+  sharedGoalId String?
+  sharedGoal   SharedGoal? @relation(fields: [sharedGoalId], references: [id])
+
+  isTitleLocked  Boolean @default(false)
+  isTargetLocked Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  achievements Achievement[]
+
+  @@index([goalSheetId])
+  @@index([thrustAreaId])
+  @@map("goals")
+}
+
+model SharedGoal {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  uomType     UoMType
+  plannedTarget  Float
+  targetDeadline DateTime?
+  unit           String?
+
+  thrustAreaId String
+  thrustArea   ThrustArea @relation(fields: [thrustAreaId], references: [id])
+
+  pushedById String
+  pushedBy   User   @relation("PushedBy", fields: [pushedById], references: [id])
+
+  cycleId      String
+  cycle        GoalCycle @relation(fields: [cycleId], references: [id])
+  departmentId String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  goals Goal[]
+
+  @@index([cycleId])
+  @@map("shared_goals")
+}
+
+model Achievement {
+  id     String @id @default(cuid())
+  goalId String
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  quarter String
+  cycleId String
+
+  actualValue     Float?
+  completionDate  DateTime?
+  status          CheckinStatus @default(NOT_STARTED)
+  progressScore   Float?
+
+  remark String?
+
+  loggedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([goalId, quarter])
+  @@index([goalId])
+  @@index([cycleId])
+  @@map("achievements")
+}
+
+model CheckinComment {
+  id          String    @id @default(cuid())
+  goalSheetId String
+  goalSheet   GoalSheet @relation(fields: [goalSheetId], references: [id])
+
+  managerId String
+  manager   User   @relation("AddedByManager", fields: [managerId], references: [id])
+
+  quarter String
+  comment String
+  rating  Int?
+  isPrivate Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([goalSheetId, managerId, quarter])
+  @@index([goalSheetId])
+  @@map("checkin_comments")
+}
+
+model AuditLog {
+  id          String     @id @default(cuid())
+  goalSheetId String?
+  goalSheet   GoalSheet? @relation(fields: [goalSheetId], references: [id])
+
+  action     AuditAction
+  entityType String
+  entityId   String
+
+  createdById String
+  createdBy   User   @relation("CreatedByUser", fields: [createdById], references: [id])
+
+  affectedUserId String?
+  affectedUser   User?   @relation("AffectedUser", fields: [affectedUserId], references: [id])
+
+  previousValues Json?
+  newValues      Json?
+  metadata       Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([goalSheetId])
+  @@index([createdById])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model EscalationRule {
+  id            String            @id @default(cuid())
+  trigger       EscalationTrigger
+  daysThreshold Int
+  isActive      Boolean           @default(true)
+  cycleId       String?
+
+  notifyEmployee  Boolean @default(true)
+  notifyManager   Boolean @default(true)
+  notifyHR        Boolean @default(false)
+  notifySkipLevel Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  escalationLogs EscalationLog[]
+
+  @@map("escalation_rules")
+}
+
+model EscalationLog {
+  id     String         @id @default(cuid())
+  ruleId String
+  rule   EscalationRule @relation(fields: [ruleId], references: [id])
+
+  employeeId String
+  employee   User   @relation("EscalationEmployee", fields: [employeeId], references: [id])
+
+  managerId String?
+  manager   User?   @relation("EscalationManager", fields: [managerId], references: [id])
+
+  status       EscalationStatus @default(PENDING)
+  resolvedAt   DateTime?
+  resolvedNote String?
+
+  notificationsSent Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@map("escalation_logs")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type    String
+  title   String
+  message String
+  link    String?
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model SystemConfig {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  @@map("system_config")
+}
