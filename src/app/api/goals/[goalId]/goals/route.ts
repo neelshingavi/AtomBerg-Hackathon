@@ -3,7 +3,8 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
 import { editableStatuses, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
-import { getCurrentPhase } from "@/lib/cycle";
+import { isGoalSettingOpen } from "@/lib/cycle";
+import { validateWeightage } from "@/lib/calculations/weightage";
 import { goalInputSchema } from "@/lib/validations/goal.schema";
 import { prisma } from "@/lib/prisma";
 
@@ -43,12 +44,26 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return apiError(`Cannot add goals when sheet status is ${sheet.status}`, 400);
   }
 
-  if (getCurrentPhase(sheet.cycle) !== "GOAL_SETTING") {
+  if (!isGoalSettingOpen(sheet.cycle)) {
     return apiError("Goal setting window is not open", 403);
   }
 
   if (sheet.goals.length >= 8) {
     return apiError("Maximum 8 goals per sheet", 400);
+  }
+
+  const weightageCheck = validateWeightage([
+    ...sheet.goals.map((g) => ({ title: g.title, weightage: g.weightage })),
+    { title: parsed.data.title, weightage: parsed.data.weightage },
+  ]);
+  if (!weightageCheck.isValid) {
+    return apiError(weightageCheck.errors.join("; "));
+  }
+
+  if (weightageCheck.totalWeightage > 100) {
+    return apiError(
+      `Total weightage cannot exceed 100%. Would be ${weightageCheck.totalWeightage.toFixed(1)}%.`
+    );
   }
 
   const goal = await prisma.goal.create({

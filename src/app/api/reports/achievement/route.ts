@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   const { rows, cycleName, goalSheets } = await buildAchievementReport({
     cycleId,
     departmentId,
+    managerId: session.user.role === "MANAGER" ? session.user.id : undefined,
     quarter: quarter === "ALL" ? null : quarter,
   });
 

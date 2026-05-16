@@ -4,6 +4,8 @@ import { requireSession } from "@/lib/api-auth";
 import { createDiff, writeAuditLog } from "@/lib/audit";
 import { patchGoalSchema } from "@/lib/validations/goal.schema";
 import { editableStatuses, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
+import { canAccessGoalSheet } from "@/lib/goal-sheet-access";
+import { validateWeightage } from "@/lib/calculations/weightage";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
@@ -25,13 +27,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       include: { goalSheet: { include: goalSheetInclude } },
     });
     if (!goal) return apiError("Not found", 404);
+    if (!canAccessGoalSheet(session.user, goal.goalSheet)) {
+      return apiError("Forbidden", 403);
+    }
     return apiSuccess({ goal });
   }
 
-  if (session.user.role === "EMPLOYEE" && sheet.employeeId !== session.user.id) {
-    return apiError("Forbidden", 403);
-  }
-  if (session.user.role === "MANAGER" && sheet.managerId !== session.user.id) {
+  if (!canAccessGoalSheet(session.user, sheet)) {
     return apiError("Forbidden", 403);
   }
 
@@ -105,6 +107,24 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     unit: goal.unit,
     weightage: goal.weightage,
   };
+
+  const projectedGoals = await prisma.goal.findMany({
+    where: { goalSheetId: sheet.id },
+    select: { id: true, title: true, weightage: true },
+  });
+
+  const mergedForValidation = projectedGoals.map((g) => {
+    if (g.id !== goalId) return { title: g.title, weightage: g.weightage };
+    return {
+      title: data.title ?? g.title,
+      weightage: data.weightage ?? g.weightage,
+    };
+  });
+
+  const weightageCheck = validateWeightage(mergedForValidation);
+  if (!weightageCheck.isValid) {
+    return apiError(weightageCheck.errors.join("; "));
+  }
 
   const updated = await prisma.goal.update({
     where: { id: goalId },

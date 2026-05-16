@@ -61,9 +61,7 @@ export async function POST(req: NextRequest) {
   }
 
   const data = parsed.data;
-  const passwordHash = data.password
-    ? await bcrypt.hash(data.password, 12)
-    : await bcrypt.hash("password123", 12);
+  const passwordHash = await bcrypt.hash(data.password, 12);
 
   try {
     const user = await prisma.user.create({

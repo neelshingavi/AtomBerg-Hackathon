@@ -1,15 +1,12 @@
 import { NextRequest } from "next/server";
 import type { AuditAction, Prisma } from "@prisma/client";
-import { apiSuccess } from "@/lib/api-response";
-import { requireSession, requireRoles } from "@/lib/api-auth";
+import { apiError, apiSuccess } from "@/lib/api-response";
+import { requireSession } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const { session, error } = await requireSession();
   if (error) return error;
-
-  const roleError = requireRoles(session, ["ADMIN"]);
-  if (roleError) return roleError;
 
   const { searchParams } = req.nextUrl;
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
@@ -22,9 +19,8 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const where: Prisma.AuditLogWhereInput = {
+  let where: Prisma.AuditLogWhereInput = {
     ...(goalSheetId ? { goalSheetId } : {}),
-    ...(userId ? { createdById: userId } : {}),
     ...(action ? { action } : {}),
     ...(from || to
       ? {
@@ -35,6 +31,28 @@ export async function GET(req: NextRequest) {
         }
       : {}),
   };
+
+  if (session.user.role === "ADMIN") {
+    if (userId) where = { ...where, affectedUserId: userId };
+  } else if (session.user.role === "EMPLOYEE") {
+    where = {
+      ...where,
+      OR: [
+        { affectedUserId: session.user.id },
+        { goalSheet: { employeeId: session.user.id } },
+      ],
+    };
+  } else if (session.user.role === "MANAGER") {
+    where = {
+      ...where,
+      goalSheet: {
+        managerId: session.user.id,
+        ...(userId ? { employeeId: userId } : {}),
+      },
+    };
+  } else {
+    return apiError("Forbidden", 403);
+  }
 
   const [total, logs] = await Promise.all([
     prisma.auditLog.count({ where }),

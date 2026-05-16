@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useCurrentCycle } from "@/hooks/useCurrentCycle";
 import { getActiveQuarter, getPhaseLabel } from "@/lib/cycle";
 import type { CyclePhase, GoalCycle } from "@prisma/client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Calendar } from "lucide-react";
+import { Calendar, Sparkles, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function CycleStatusBanner({
   goalSheetId,
@@ -25,13 +26,24 @@ export function CycleStatusBanner({
 
   if (phase === "GOAL_SETTING") {
     return (
-      <Alert className="mb-6 border-amber-200 bg-amber-50">
-        <Calendar className="h-4 w-4" />
-        <AlertTitle>Goal setting open</AlertTitle>
-        <AlertDescription>
-          {getPhaseLabel(phase)} for {cycle.name} — submit your goals before the window closes.
-        </AlertDescription>
-      </Alert>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6 overflow-hidden rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50 p-4 shadow-sm"
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-semibold text-amber-900">Goal setting is open</p>
+            <p className="mt-1 text-sm text-amber-800/90">
+              {getPhaseLabel(phase)} for {cycle.name} — submit your goals before the window
+              closes.
+            </p>
+          </div>
+        </div>
+      </motion.div>
     );
   }
 
@@ -47,24 +59,39 @@ export function CycleStatusBanner({
     const remaining = Math.max(0, goalsCount - logged);
 
     return (
-      <Alert className="mb-6 border-emerald-200 bg-emerald-50">
-        <Calendar className="h-4 w-4 text-emerald-700" />
-        <AlertTitle className="text-emerald-900">
-          {activeQuarter} check-in window open
-        </AlertTitle>
-        <AlertDescription className="text-emerald-800">
-          Please update your achievement for {activeQuarter}.{" "}
-          {remaining > 0
-            ? `${remaining} goal${remaining === 1 ? "" : "s"} remaining.`
-            : "All goals updated."}{" "}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6 overflow-hidden rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 via-teal-50/40 to-emerald-50 p-4 shadow-sm"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-700">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-emerald-900">
+                {activeQuarter} check-in window is open
+              </p>
+              <p className="mt-1 text-sm text-emerald-800/90">
+                {remaining > 0
+                  ? `${remaining} goal${remaining === 1 ? "" : "s"} still need updates.`
+                  : "All goals updated for this quarter."}
+              </p>
+            </div>
+          </div>
           <Link
             href={`/employee/goals/${goalSheetId}/checkin`}
-            className="font-medium underline underline-offset-2"
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white",
+              "shadow-sm transition-colors hover:bg-emerald-700"
+            )}
           >
-            Go to check-ins →
+            Go to check-ins
+            <ArrowRight className="h-4 w-4" />
           </Link>
-        </AlertDescription>
-      </Alert>
+        </div>
+      </motion.div>
     );
   }
 

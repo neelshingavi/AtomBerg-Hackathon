@@ -25,7 +25,6 @@ export async function GET() {
   const masked = url ? `${url.slice(0, 30)}…` : "";
 
   return apiSuccess({
-    teamsWebhookUrl: url,
     teamsWebhookConfigured: Boolean(url),
     teamsWebhookMasked: masked,
     azureAdConfigured: Boolean(

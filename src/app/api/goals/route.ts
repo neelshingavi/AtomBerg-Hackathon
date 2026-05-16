@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession, requireRoles } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
-import { getCurrentPhase } from "@/lib/cycle";
+import { isGoalSettingOpen } from "@/lib/cycle";
 import { validateWeightage } from "@/lib/calculations/weightage";
 import { createGoalSheetSchema } from "@/lib/validations/goal.schema";
 import { goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
@@ -79,15 +79,20 @@ export async function POST(req: NextRequest) {
     return apiError(parsed.error.issues.map((i) => i.message).join("; "));
   }
 
-  const { cycleId, goals } = parsed.data;
-  const employeeId = session.user.role === "ADMIN" && (body as { employeeId?: string }).employeeId
-    ? (body as { employeeId: string }).employeeId
-    : session.user.id;
+  const { cycleId, goals, employeeId: requestedEmployeeId } = parsed.data;
+  const employeeId =
+    session.user.role === "ADMIN" && requestedEmployeeId
+      ? requestedEmployeeId
+      : session.user.id;
+
+  if (session.user.role === "EMPLOYEE" && employeeId !== session.user.id) {
+    return apiError("Forbidden", 403);
+  }
 
   const cycle = await prisma.goalCycle.findUnique({ where: { id: cycleId } });
   if (!cycle) return apiError("Cycle not found", 404);
 
-  if (getCurrentPhase(cycle) !== "GOAL_SETTING") {
+  if (!isGoalSettingOpen(cycle)) {
     return apiError("Goal setting window is not open for this cycle", 403);
   }
 

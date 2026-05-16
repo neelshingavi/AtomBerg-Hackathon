@@ -34,7 +34,7 @@ const goalFieldSchema = z.object({
   plannedTarget: z.number(),
   targetDeadline: z.string().optional(),
   unit: z.string().optional(),
-  weightage: z.number().min(0).max(100),
+  weightage: z.number().min(10).max(100),
   isShared: z.boolean().optional(),
   isTitleLocked: z.boolean().optional(),
   isTargetLocked: z.boolean().optional(),

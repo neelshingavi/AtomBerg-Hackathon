@@ -17,11 +17,13 @@ export const goalInputSchema = z.object({
   plannedTarget: z.number(),
   targetDeadline: z.coerce.date().optional().nullable(),
   unit: z.string().max(100).optional(),
-  weightage: z.number().min(0).max(100),
+  weightage: z.number().min(10).max(100),
 });
 
 export const createGoalSheetSchema = z.object({
   cycleId: z.string().min(1),
+  /** Admin only: create a sheet on behalf of another employee */
+  employeeId: z.string().min(1).optional(),
   goals: z.array(goalInputSchema).min(1).max(8),
 });
 
@@ -33,7 +35,7 @@ export const patchGoalSchema = z
     plannedTarget: z.number().optional(),
     targetDeadline: z.coerce.date().optional().nullable(),
     unit: z.string().max(100).optional().nullable(),
-    weightage: z.number().min(0).max(100).optional(),
+    weightage: z.number().min(10).max(100).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: "No fields to update" });
 

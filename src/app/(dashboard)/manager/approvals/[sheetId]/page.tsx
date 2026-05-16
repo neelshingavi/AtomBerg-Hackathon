@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -27,6 +28,7 @@ import { validateSubmission } from "@/lib/calculations/weightage";
 export default function ManagerReviewPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const sheetId = params.sheetId as string;
   const { data: sheet, isLoading } = useGoalSheet(sheetId);
   const approve = useApproveGoalSheet();
@@ -34,6 +36,24 @@ export default function ManagerReviewPage() {
 
   const [managerNote, setManagerNote] = useState("");
   const [edits, setEdits] = useState<Record<string, { weightage: number; plannedTarget: number }>>({});
+
+  const sheetStatus = sheet?.status;
+
+  useEffect(() => {
+    if (!sheetId || sheetStatus !== "SUBMITTED") return;
+
+    void fetch(`/api/goals/${sheetId}/start-review`, { method: "POST" })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && !json.data?.unchanged) {
+          void queryClient.invalidateQueries({ queryKey: ["goalSheet", sheetId] });
+          void queryClient.invalidateQueries({ queryKey: ["goalSheets"] });
+        }
+      })
+      .catch(() => {
+        /* non-blocking — manager can still approve */
+      });
+  }, [sheetId, sheetStatus, queryClient]);
 
   if (isLoading || !sheet) {
     return (

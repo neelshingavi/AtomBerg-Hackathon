@@ -35,7 +35,7 @@ test.describe("Employee journey", () => {
 
 test.describe("Employee full journey (SOLUTION §16.3)", () => {
   test("can add multiple goals on create form", async ({ page }) => {
-    await login(page, "emp4@demo.com");
+    await login(page, "employee@demo.com");
     await page.goto("/employee/goals/new");
     await expect(page.getByText("Goal #1")).toBeVisible();
     await expect(page.getByTestId("weightage-total")).toBeVisible();
@@ -46,8 +46,8 @@ test.describe("Employee full journey (SOLUTION §16.3)", () => {
   });
 
   test("can submit draft goal sheet for approval", async ({ page }) => {
-    await login(page, "emp3@demo.com");
-    await page.goto("/employee/goals/sheet-emp044-draft");
+    await login(page, "employee3@demo.com");
+    await page.goto("/employee/goals/sheet-employee3-draft");
     await expect(page.getByTestId("status-badge")).toContainText("Draft");
     await page.getByRole("button", { name: /submit for approval/i }).click();
     await expect(page.getByTestId("status-badge")).toContainText("Submitted", {

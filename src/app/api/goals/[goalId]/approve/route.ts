@@ -6,6 +6,7 @@ import { validateSubmission } from "@/lib/calculations/weightage";
 import { approveSheetSchema } from "@/lib/validations/goal.schema";
 import { createNotification, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
 import { sendGoalApprovedEmail } from "@/lib/email/resend";
+import { getRequestIp } from "@/lib/request-ip";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
@@ -51,12 +52,61 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 
   const { managerNote, inlineEdits } = parsed.data;
+  const clientIp = getRequestIp(req);
 
-  if (inlineEdits?.length) {
-    for (const edit of inlineEdits) {
-      const goal = sheet.goals.find((g) => g.id === edit.goalId);
-      if (!goal) return apiError(`Goal ${edit.goalId} not found on sheet`, 400);
+  const editMap = new Map((inlineEdits ?? []).map((e) => [e.goalId, e]));
 
+  for (const edit of inlineEdits ?? []) {
+    const goal = sheet.goals.find((g) => g.id === edit.goalId);
+    if (!goal) {
+      return apiError(`Goal ${edit.goalId} not found on sheet`, 400);
+    }
+    if (goal.isTitleLocked && edit.title !== undefined && edit.title !== goal.title) {
+      return apiError("Cannot edit title of shared goal", 403);
+    }
+    if (
+      goal.isTargetLocked &&
+      edit.plannedTarget !== undefined &&
+      edit.plannedTarget !== goal.plannedTarget
+    ) {
+      return apiError("Cannot edit target of shared goal", 403);
+    }
+  }
+
+  const projectedGoals = sheet.goals.map((goal) => {
+    const edit = editMap.get(goal.id);
+    if (!edit) {
+      return {
+        id: goal.id,
+        title: goal.title,
+        weightage: goal.weightage,
+        plannedTarget: goal.plannedTarget,
+        description: goal.description,
+      };
+    }
+    return {
+      id: goal.id,
+      title: edit.title ?? goal.title,
+      weightage: edit.weightage ?? goal.weightage,
+      plannedTarget: edit.plannedTarget ?? goal.plannedTarget,
+      description: edit.description ?? goal.description,
+    };
+  });
+
+  const validation = validateSubmission(
+    projectedGoals.map((g) => ({ title: g.title, weightage: g.weightage }))
+  );
+
+  if (!validation.isValid) {
+    return apiError(validation.errors.join("; "));
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    for (const projected of projectedGoals) {
+      const edit = editMap.get(projected.id);
+      if (!edit) continue;
+
+      const goal = sheet.goals.find((g) => g.id === projected.id)!;
       const previous = {
         weightage: goal.weightage,
         plannedTarget: goal.plannedTarget,
@@ -64,49 +114,40 @@ export async function POST(req: NextRequest, context: RouteContext) {
         description: goal.description,
       };
 
-      await prisma.goal.update({
-        where: { id: edit.goalId },
+      await tx.goal.update({
+        where: { id: projected.id },
         data: {
-          weightage: edit.weightage,
-          plannedTarget: edit.plannedTarget,
-          title: edit.title,
-          description: edit.description,
+          weightage: projected.weightage,
+          plannedTarget: projected.plannedTarget,
+          title: projected.title,
+          description: projected.description,
         },
       });
 
       const diff = createDiff(previous as Record<string, unknown>, {
-        weightage: edit.weightage ?? goal.weightage,
-        plannedTarget: edit.plannedTarget ?? goal.plannedTarget,
-        title: edit.title ?? goal.title,
-        description: edit.description ?? goal.description,
+        weightage: projected.weightage,
+        plannedTarget: projected.plannedTarget,
+        title: projected.title,
+        description: projected.description,
       });
 
       if (Object.keys(diff.next).length > 0) {
         await writeAuditLog({
           action: "UPDATED",
           entityType: "Goal",
-          entityId: edit.goalId,
+          entityId: projected.id,
           createdById: session.user.id,
           affectedUserId: sheet.employeeId,
           goalSheetId,
           previousValues: diff.prev,
           newValues: diff.next,
           metadata: { inlineEdit: true },
+          ipAddress: clientIp,
         });
       }
     }
-  }
 
-  const refreshedGoals = await prisma.goal.findMany({ where: { goalSheetId } });
-  const validation = validateSubmission(
-    refreshedGoals.map((g) => ({ title: g.title, weightage: g.weightage }))
-  );
-  if (!validation.isValid) {
-    return apiError(validation.errors.join("; "));
-  }
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.goalSheet.update({
+    return tx.goalSheet.update({
       where: { id: goalSheetId },
       data: {
         status: "APPROVED",
@@ -119,20 +160,19 @@ export async function POST(req: NextRequest, context: RouteContext) {
       },
       include: goalSheetInclude,
     });
+  });
 
-    await writeAuditLog({
-      action: "APPROVED",
-      entityType: "GoalSheet",
-      entityId: goalSheetId,
-      createdById: session.user.id,
-      affectedUserId: sheet.employeeId,
-      goalSheetId,
-      previousValues: { status: sheet.status, isLocked: sheet.isLocked },
-      newValues: { status: "APPROVED", isLocked: true },
-      metadata: { managerNote },
-    });
-
-    return result;
+  await writeAuditLog({
+    action: "APPROVED",
+    entityType: "GoalSheet",
+    entityId: goalSheetId,
+    createdById: session.user.id,
+    affectedUserId: sheet.employeeId,
+    goalSheetId,
+    previousValues: { status: sheet.status, isLocked: sheet.isLocked },
+    newValues: { status: "APPROVED", isLocked: true },
+    metadata: { managerNote },
+    ipAddress: clientIp,
   });
 
   await createNotification({

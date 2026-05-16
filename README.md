@@ -80,18 +80,33 @@ npm run demo                  # printed demo script for judges
 
 ## Demo accounts
 
-All passwords: **`password123`**
+All passwords: **`password123`**. The seed creates **exactly 9 users** — 3 per role — with no extra demo accounts.
 
-| Email | Role | Purpose in demo |
-|-------|------|-----------------|
-| `employee@demo.com` | EMPLOYEE | Approved + locked sheet, Q1 check-in |
-| `manager@demo.com` | MANAGER | Approvals queue, team check-ins |
-| `admin@demo.com` | ADMIN | Full admin, reports, unlock, settings |
-| `emp2@demo.com` | EMPLOYEE | **SUBMITTED** sheet (manager can approve) |
-| `emp3@demo.com` | EMPLOYEE | **DRAFT** sheet with 2 goals (60/40) — submit demo |
-| `emp4@demo.com` | EMPLOYEE | **No sheet** — create-new flow |
+### Admins
 
-> Re-run `npm run db:seed` before demos if E2E tests changed `emp3` to Submitted.
+| Email | Name | Purpose |
+|-------|------|---------|
+| `admin@demo.com` | Priya Mehta | Primary admin — cycles, users, reports, audit |
+| `admin2@demo.com` | Vikram Singh | Secondary admin — HR operations |
+| `admin3@demo.com` | Kavita Nair | Secondary admin — people ops |
+
+### Managers
+
+| Email | Name | Department | Purpose |
+|-------|------|------------|---------|
+| `manager@demo.com` | Amit Patel | Engineering | Approvals queue, team check-ins (3 direct reports) |
+| `manager2@demo.com` | Deepa Joshi | Operations | Manager dashboard / analytics |
+| `manager3@demo.com` | Karan Desai | Finance | Manager dashboard / analytics |
+
+### Employees
+
+| Email | Name | Goal sheet state | Purpose |
+|-------|------|------------------|---------|
+| `employee@demo.com` | Riya Sharma | **APPROVED** (locked) | Q1 check-in, approved goals |
+| `employee2@demo.com` | Rohan Verma | **SUBMITTED** | Manager approval queue |
+| `employee3@demo.com` | Sneha Iyer | **DRAFT** (60/40 weightage) | Submit-for-approval demo |
+
+> Re-run `npm run db:seed` before demos if E2E tests changed `employee3@demo.com` to Submitted.
 
 ---
 
@@ -219,14 +234,14 @@ POST   /api/shared-goals
 ### How to verify Phase 1
 
 ```bash
-# emp4 — create flow
-login emp4@demo.com → /employee/goals/new → add goals → submit
+# employee@demo.com — create additional goals (no draft sheet)
+login employee@demo.com → /employee/goals/new → add goals
 
-# emp3 — submit pre-filled draft
-login emp3@demo.com → /employee/goals/sheet-emp044-draft → Submit
+# employee3 — submit pre-filled draft
+login employee3@demo.com → /employee/goals/sheet-employee3-draft → Submit
 
-# manager — approve emp2
-login manager@demo.com → /manager/approvals → Review → Approve
+# manager — approve employee2
+login manager@demo.com → /manager/approvals → Review Rohan Verma → Approve
 
 npm run verify:edge-cases
 npx playwright test e2e/employee-journey.spec.ts e2e/manager-journey.spec.ts
@@ -730,7 +745,7 @@ npm run demo
 **Suggested order (~10 min):**
 
 1. **Employee** — `employee@demo.com` → goals → check-in on approved sheet  
-2. **Manager** — `manager@demo.com` → approve `emp2` → team check-in  
+2. **Manager** — `manager@demo.com` → approve `employee2@demo.com` → team check-in  
 3. **Admin** — `admin@demo.com` → cycles → achievement export → audit log  
 
 ---

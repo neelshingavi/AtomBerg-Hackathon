@@ -1,9 +1,15 @@
 import type { CyclePhase, GoalCycle } from "@prisma/client";
 
+/** True only during the configured goal-setting date range. */
+export function isGoalSettingOpen(cycle: GoalCycle): boolean {
+  const now = new Date();
+  return now >= cycle.goalSettingStart && now <= cycle.goalSettingEnd;
+}
+
 export function getCurrentPhase(cycle: GoalCycle): CyclePhase {
   const now = new Date();
 
-  if (now >= cycle.goalSettingStart && now <= cycle.goalSettingEnd) {
+  if (isGoalSettingOpen(cycle)) {
     return "GOAL_SETTING";
   }
   if (now >= cycle.q1WindowStart && now <= cycle.q1WindowEnd) {
@@ -18,10 +24,8 @@ export function getCurrentPhase(cycle: GoalCycle): CyclePhase {
   if (now >= cycle.q4WindowStart && now <= cycle.q4WindowEnd) {
     return "Q4_ANNUAL";
   }
-  if (now > cycle.q4WindowEnd) {
-    return "CLOSED";
-  }
-  return "GOAL_SETTING";
+  // Before cycle starts, between windows, or after Q4 — no active phase
+  return "CLOSED";
 }
 
 export function isWindowOpen(cycle: GoalCycle, phase: CyclePhase): boolean {

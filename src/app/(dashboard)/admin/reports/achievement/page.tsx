@@ -5,14 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Topbar } from "@/components/layout/Topbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ExportButton } from "@/components/reports/ExportButton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable, DataTableSortHeader } from "@/components/ui/data-table";
 import {
   Select,
   SelectContent,
@@ -74,13 +68,23 @@ export default function AchievementReportPage() {
     },
   });
 
-  const columns = useMemo(() => {
+  const columnKeys = useMemo(() => {
     if (!rows?.length) return PREVIEW_COLUMNS;
     const keys = Object.keys(rows[0]);
     const preferred = PREVIEW_COLUMNS.filter((k) => keys.includes(k));
     const rest = keys.filter((k) => !preferred.includes(k)).slice(0, 4);
     return [...preferred, ...rest];
   }, [rows]);
+
+  const tableColumns = useMemo<ColumnDef<ReportRow>[]>(
+    () =>
+      columnKeys.map((key) => ({
+        accessorKey: key,
+        header: ({ column }) => <DataTableSortHeader column={column} title={key} />,
+        cell: ({ row }) => row.getValue(key) ?? "—",
+      })),
+    [columnKeys]
+  );
 
   return (
     <>
@@ -165,38 +169,11 @@ export default function AchievementReportPage() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.map((col) => (
-                    <TableHead key={col}>{col}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows?.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="text-center text-muted-foreground"
-                    >
-                      No approved locked sheets for selected filters
-                    </TableCell>
-                  </TableRow>
-                )}
-                {rows?.map((row, i) => (
-                  <TableRow key={i}>
-                    {columns.map((col) => (
-                      <TableCell key={col} className="text-sm whitespace-nowrap">
-                        {row[col] ?? "—"}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={tableColumns}
+            data={rows ?? []}
+            emptyMessage="No approved locked sheets for selected filters"
+          />
         )}
       </PageContainer>
     </>

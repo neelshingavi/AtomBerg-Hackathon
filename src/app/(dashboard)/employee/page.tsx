@@ -4,10 +4,14 @@ import { Topbar } from "@/components/layout/Topbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { prisma } from "@/lib/prisma";
 import { getActiveCycle, getActiveQuarter } from "@/lib/cycle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoalStatusBadge } from "@/components/goals/GoalStatusBadge";
-import { ButtonLink } from "@/components/ui/button-link";
 import { EmployeeDashboardClient } from "@/app/(dashboard)/employee/employee-dashboard-client";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { PageHeader } from "@/components/ui/page-header";
+import { ActionCard } from "@/components/ui/action-card";
+import { Target, Scale, FileCheck, CalendarDays, PenLine, ClipboardCheck } from "lucide-react";
+import { FadeIn } from "@/components/motion";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 
 export default async function EmployeeDashboard() {
   const session = await auth();
@@ -44,6 +48,11 @@ export default async function EmployeeDashboard() {
     <>
       <Topbar title="Dashboard" />
       <PageContainer>
+        <PageHeader
+          title={`Hello, ${session.user.name?.split(" ")[0] ?? "there"}`}
+          description="Track your goals, submit for approval, and log quarterly achievements."
+        />
+
         <EmployeeDashboardClient
           goalSheetId={sheet?.id}
           goalsCount={sheet?.goals.length}
@@ -60,67 +69,78 @@ export default async function EmployeeDashboard() {
           openQuarter={activeQuarter}
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">My goals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{sheet?.goals.length ?? 0} / 8</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Weightage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{totalWeightage}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sheet ? <GoalStatusBadge status={sheet.status} /> : <span className="text-sm">No sheet</span>}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Cycle</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm font-medium">{cycle?.name ?? "—"}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <DashboardStats
+          className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          items={[
+            {
+              label: "My goals",
+              value: `${sheet?.goals.length ?? 0} / 8`,
+              hint: "Maximum per sheet",
+              icon: Target,
+              accent: "info",
+            },
+            {
+              label: "Weightage",
+              value: `${totalWeightage}%`,
+              hint: totalWeightage === 100 ? "Ready to submit" : "Target 100%",
+              icon: Scale,
+              accent: totalWeightage === 100 ? "success" : "warning",
+            },
+            {
+              label: "Status",
+              value: sheet ? <GoalStatusBadge status={sheet.status} /> : "No sheet",
+              icon: FileCheck,
+              accent: "neutral",
+            },
+            {
+              label: "Active cycle",
+              value: cycle?.name ?? "—",
+              hint: cycle?.fiscalYear,
+              icon: CalendarDays,
+              accent: "default",
+            },
+          ]}
+        />
 
         {!sheet && cycle && (
-          <Card className="border-dashed">
-            <CardContent className="py-8 flex flex-col items-center gap-4">
-              <p className="text-muted-foreground">You have not created goals for {cycle.name} yet.</p>
-              <ButtonLink href="/employee/goals/new">Create goal sheet</ButtonLink>
-            </CardContent>
-          </Card>
+          <FadeIn>
+            <ActionCard
+              href="/employee/goals/new"
+              title="Create your goal sheet"
+              description={`Start building goals for ${cycle.name} before the window closes.`}
+              icon={PenLine}
+              variant="primary"
+            />
+          </FadeIn>
         )}
 
         {sheet && ["DRAFT", "REWORK"].includes(sheet.status) && (
-          <Card className="mt-4">
-            <CardContent className="py-4 flex items-center justify-between">
-              <p className="text-sm">Continue editing your goal sheet.</p>
-              <ButtonLink href={`/employee/goals/${sheet.id}`}>Edit goals</ButtonLink>
-            </CardContent>
-          </Card>
+          <FadeIn className="mt-4">
+            <ActionCard
+              href={`/employee/goals/${sheet.id}`}
+              title="Continue editing"
+              description="Your goal sheet is in draft — complete and submit for manager approval."
+              icon={PenLine}
+              variant="warning"
+            />
+          </FadeIn>
         )}
 
         {sheet?.status === "APPROVED" && sheet.isLocked && (
-          <Card className="mt-4">
-            <CardContent className="py-4 flex items-center justify-between">
-              <p className="text-sm">Log quarterly achievements for your approved goals.</p>
-              <ButtonLink href={`/employee/goals/${sheet.id}/checkin`}>Open check-ins</ButtonLink>
-            </CardContent>
-          </Card>
+          <FadeIn className="mt-4">
+            <ActionCard
+              href="/employee/checkins"
+              title="Quarterly check-in"
+              description="Log achievements and progress for your approved goals."
+              icon={ClipboardCheck}
+              variant="success"
+            />
+          </FadeIn>
         )}
+
+        <div className="mt-8">
+          <ActivityFeed limit={6} />
+        </div>
       </PageContainer>
     </>
   );

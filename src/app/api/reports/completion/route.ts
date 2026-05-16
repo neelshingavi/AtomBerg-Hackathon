@@ -22,7 +22,11 @@ export async function GET(req: NextRequest) {
   if (!cycle) return apiError("Cycle not found", 404);
 
   const employees = await prisma.user.findMany({
-    where: { role: "EMPLOYEE", isActive: true },
+    where: {
+      role: "EMPLOYEE",
+      isActive: true,
+      ...(session.user.role === "MANAGER" ? { managerId: session.user.id } : {}),
+    },
     select: { id: true, name: true, departmentId: true, managerId: true },
   });
 

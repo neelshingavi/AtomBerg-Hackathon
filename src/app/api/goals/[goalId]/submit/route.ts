@@ -2,16 +2,17 @@ import { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
-import { getCurrentPhase } from "@/lib/cycle";
+import { isGoalSettingOpen } from "@/lib/cycle";
 import { validateSubmission } from "@/lib/calculations/weightage";
 import { createNotification, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
 import { sendGoalSubmittedEmail } from "@/lib/email/resend";
 import { notifyGoalSubmittedTeams } from "@/lib/teams/webhook";
+import { getRequestIp } from "@/lib/request-ip";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
 
-export async function POST(_req: NextRequest, context: RouteContext) {
+export async function POST(req: NextRequest, context: RouteContext) {
   const { session, error } = await requireSession();
   if (error) return error;
 
@@ -41,7 +42,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     return apiError("You must add at least 1 goal before submitting.", 400);
   }
 
-  if (getCurrentPhase(sheet.cycle) !== "GOAL_SETTING") {
+  if (!isGoalSettingOpen(sheet.cycle)) {
     return apiError("Goal setting window is not open", 403);
   }
 
@@ -52,14 +53,27 @@ export async function POST(_req: NextRequest, context: RouteContext) {
     return apiError(validation.errors.join("; "));
   }
 
+  const clientIp = getRequestIp(req);
+
   const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.goalSheet.update({
-      where: { id: goalSheetId },
+    const { count } = await tx.goalSheet.updateMany({
+      where: {
+        id: goalSheetId,
+        status: { in: ["DRAFT", "REWORK"] },
+      },
       data: {
         status: "SUBMITTED",
         submittedAt: new Date(),
         rejectedAt: null,
       },
+    });
+
+    if (count === 0) {
+      throw new Error("CONCURRENT_SUBMIT");
+    }
+
+    const result = await tx.goalSheet.findUniqueOrThrow({
+      where: { id: goalSheetId },
       include: goalSheetInclude,
     });
 
@@ -72,10 +86,20 @@ export async function POST(_req: NextRequest, context: RouteContext) {
       goalSheetId,
       previousValues: { status: sheet.status },
       newValues: { status: "SUBMITTED" },
+      ipAddress: clientIp,
     });
 
     return result;
+  }).catch((e) => {
+    if (e instanceof Error && e.message === "CONCURRENT_SUBMIT") {
+      return null;
+    }
+    throw e;
   });
+
+  if (!updated) {
+    return apiError(`Cannot submit sheet with status ${sheet.status}`, 409);
+  }
 
   if (sheet.managerId && sheet.manager) {
     await createNotification({

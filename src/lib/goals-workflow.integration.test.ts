@@ -40,9 +40,9 @@ describe("Goal workflow integration", () => {
     expect(total).toBe(100);
   });
 
-  it("emp3 sheet has two goals totaling 100% weightage (seed)", async () => {
+  it("employee3 sheet has two goals totaling 100% weightage (seed)", async () => {
     const sheet = await prisma.goalSheet.findFirst({
-      where: { employee: { email: "emp3@demo.com" } },
+      where: { employee: { email: "employee3@demo.com" } },
       include: { goals: true },
     });
     expect(sheet).toBeTruthy();

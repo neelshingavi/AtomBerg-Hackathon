@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Target,
@@ -16,9 +17,11 @@ import {
   Calendar,
   BarChart3,
   ClipboardList,
+  ClipboardCheck,
   TrendingUp,
   AlertTriangle,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,7 @@ export function Sidebar({
   const employeeNav: NavItem[] = [
     { href: "/employee", label: "Dashboard", icon: LayoutDashboard },
     { href: "/employee/goals", label: "My Goals", icon: Target },
+    { href: "/employee/checkins", label: "Check-ins", icon: ClipboardCheck },
     { href: "/employee/shared-goals", label: "Shared Goals", icon: Share2 },
   ];
 
@@ -75,9 +79,10 @@ export function Sidebar({
 
   function renderNav(items: NavItem[]) {
     return (
-      <nav className="space-y-1">
+      <nav className="space-y-0.5">
         {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
             <Link
@@ -85,16 +90,31 @@ export function Sidebar({
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                 active
-                  ? "bg-brand-500/10 text-brand-700"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "text-white"
+                  : "text-sidebar-muted hover:bg-white/5 hover:text-sidebar-foreground"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              {active && (
+                <motion.span
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-lg bg-gradient-to-r from-brand-600/90 to-brand-500/80 shadow-inner-glow"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <Icon
+                className={cn(
+                  "relative z-10 h-4 w-4 shrink-0 transition-transform duration-200",
+                  active ? "text-white" : "group-hover:scale-110"
+                )}
+              />
+              <span className="relative z-10 flex-1">{item.label}</span>
               {item.badge != null && item.badge > 0 && (
-                <Badge variant="secondary" className="ml-auto">
+                <Badge
+                  variant="secondary"
+                  className="relative z-10 ml-auto border-0 bg-white/20 text-xs text-white"
+                >
                   {item.badge}
                 </Badge>
               )}
@@ -106,23 +126,40 @@ export function Sidebar({
   }
 
   return (
-    <aside className={cn("flex h-full w-60 flex-col border-r bg-card", className)}>
-      <div className="border-b px-4 py-5">
-        <p className="text-lg font-bold text-brand-700">
-          {process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal"}
-        </p>
+    <aside
+      className={cn(
+        "sidebar-gradient flex h-full w-64 flex-col border-r border-sidebar-border text-sidebar-foreground",
+        className
+      )}
+    >
+      <div className="border-b border-sidebar-border px-5 py-6">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-cyan-500 shadow-glow">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <p className="text-base font-bold tracking-tight text-white">
+              {process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal"}
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-muted">
+              Performance OS
+            </p>
+          </div>
+        </div>
         {session?.user && (
-          <div className="mt-3 text-sm">
-            <p className="font-medium truncate">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground font-mono">{session.user.employeeCode}</p>
+          <div className="mt-5 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 backdrop-blur-sm">
+            <p className="truncate text-sm font-medium text-white">{session.user.name}</p>
+            <p className="font-mono text-[11px] text-sidebar-muted">
+              {session.user.employeeCode}
+            </p>
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-6">
+      <div className="flex-1 space-y-6 overflow-y-auto p-3 scrollbar-thin">
         {(role === "EMPLOYEE" || role === "MANAGER" || role === "ADMIN") && (
           <div>
-            <p className="px-3 mb-2 text-xs font-semibold uppercase text-muted-foreground">
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
               Employee
             </p>
             {renderNav(employeeNav)}
@@ -131,7 +168,7 @@ export function Sidebar({
 
         {(role === "MANAGER" || role === "ADMIN") && (
           <div>
-            <p className="px-3 mb-2 text-xs font-semibold uppercase text-muted-foreground">
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
               Manager
             </p>
             {renderNav(managerNav)}
@@ -140,16 +177,18 @@ export function Sidebar({
 
         {role === "ADMIN" && (
           <div>
-            <p className="px-3 mb-2 text-xs font-semibold uppercase text-muted-foreground">Admin</p>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
+              Admin
+            </p>
             {renderNav(adminNav)}
           </div>
         )}
       </div>
 
-      <div className="border-t p-3">
+      <div className="border-t border-sidebar-border p-3">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 text-sidebar-muted hover:bg-white/10 hover:text-white"
           onClick={() => signOut({ callbackUrl: "/login" })}
         >
           <LogOut className="h-4 w-4" />

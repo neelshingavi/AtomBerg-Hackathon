@@ -5,9 +5,10 @@ export type AchievementReportRow = Record<string, string | number>;
 export async function buildAchievementReport(params: {
   cycleId: string;
   departmentId?: string;
+  managerId?: string;
   quarter?: string | null;
 }) {
-  const { cycleId, departmentId, quarter } = params;
+  const { cycleId, departmentId, managerId, quarter } = params;
 
   const goalSheets = await prisma.goalSheet.findMany({
     where: {
@@ -15,6 +16,7 @@ export async function buildAchievementReport(params: {
       isLocked: true,
       status: "APPROVED",
       ...(departmentId ? { employee: { departmentId } } : {}),
+      ...(managerId ? { managerId } : {}),
     },
     include: {
       employee: {

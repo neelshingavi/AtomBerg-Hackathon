@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Topbar } from "@/components/layout/Topbar";
@@ -22,16 +22,12 @@ export default function AdminSettingsPage() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
       return json.data as {
-        teamsWebhookUrl: string;
+        teamsWebhookMasked: string;
         teamsWebhookConfigured: boolean;
         azureAdConfigured: boolean;
       };
     },
   });
-
-  useEffect(() => {
-    if (data?.teamsWebhookUrl) setTeamsUrl(data.teamsWebhookUrl);
-  }, [data?.teamsWebhookUrl]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -72,10 +68,15 @@ export default function AdminSettingsPage() {
                     onChange={(e) => setTeamsUrl(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={data?.teamsWebhookConfigured ? "default" : "secondary"}>
+                <div className="flex flex-col gap-1">
+                  <Badge variant={data?.teamsWebhookConfigured ? "default" : "secondary"} className="w-fit">
                     {data?.teamsWebhookConfigured ? "Configured" : "Not configured"}
                   </Badge>
+                  {data?.teamsWebhookConfigured && data.teamsWebhookMasked ? (
+                    <p className="text-xs text-muted-foreground">
+                      Current webhook: {data.teamsWebhookMasked} (enter a new URL to replace)
+                    </p>
+                  ) : null}
                 </div>
                 <Button onClick={() => save.mutate()} disabled={save.isPending}>
                   Save webhook

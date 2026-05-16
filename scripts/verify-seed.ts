@@ -6,14 +6,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const DEMO_EMAILS = [
-  "employee@demo.com",
-  "manager@demo.com",
-  "admin@demo.com",
-  "emp2@demo.com",
-  "emp3@demo.com",
-  "emp4@demo.com",
+const DEMO_EMAILS = {
+  ADMIN: ["admin@demo.com", "admin2@demo.com", "admin3@demo.com"],
+  MANAGER: ["manager@demo.com", "manager2@demo.com", "manager3@demo.com"],
+  EMPLOYEE: ["employee@demo.com", "employee2@demo.com", "employee3@demo.com"],
+};
+
+const ALL_DEMO_EMAILS = [
+  ...DEMO_EMAILS.ADMIN,
+  ...DEMO_EMAILS.MANAGER,
+  ...DEMO_EMAILS.EMPLOYEE,
 ];
+
+const REMOVED_EMAILS = ["emp2@demo.com", "emp3@demo.com", "emp4@demo.com"];
 
 async function main() {
   console.log("Seed verification\n");
@@ -21,17 +26,32 @@ async function main() {
   let ok = true;
 
   const users = await prisma.user.findMany({
-    where: { email: { in: DEMO_EMAILS } },
+    where: { email: { in: [...ALL_DEMO_EMAILS, ...REMOVED_EMAILS] } },
     select: { email: true, role: true, isActive: true },
   });
 
-  for (const email of DEMO_EMAILS) {
+  for (const email of ALL_DEMO_EMAILS) {
     const u = users.find((x) => x.email === email);
     if (!u?.isActive) {
       console.error(`  ✗ Missing or inactive: ${email}`);
       ok = false;
     } else {
       console.log(`  ✓ ${email} (${u.role})`);
+    }
+  }
+
+  for (const email of REMOVED_EMAILS) {
+    if (users.some((x) => x.email === email)) {
+      console.error(`  ✗ Legacy account still present: ${email}`);
+      ok = false;
+    }
+  }
+
+  for (const [role, emails] of Object.entries(DEMO_EMAILS)) {
+    const count = users.filter((u) => emails.includes(u.email) && u.role === role).length;
+    if (count !== 3) {
+      console.error(`  ✗ Expected 3 ${role} users, found ${count}`);
+      ok = false;
     }
   }
 
@@ -60,8 +80,26 @@ async function main() {
     );
   }
 
-  const submitted = await prisma.goalSheet.count({ where: { status: "SUBMITTED" } });
-  console.log(`  ✓ Submitted sheets pending approval: ${submitted}`);
+  const submitted = await prisma.goalSheet.findFirst({
+    where: { status: "SUBMITTED", employee: { email: "employee2@demo.com" } },
+  });
+  if (!submitted) {
+    console.error("  ✗ No submitted sheet for employee2@demo.com");
+    ok = false;
+  } else {
+    console.log("  ✓ employee2@demo.com submitted sheet (pending approval)");
+  }
+
+  const draft = await prisma.goalSheet.findFirst({
+    where: { status: "DRAFT", employee: { email: "employee3@demo.com" } },
+    include: { goals: true },
+  });
+  if (!draft || draft.goals.length !== 2) {
+    console.error("  ✗ employee3@demo.com draft sheet missing or incomplete");
+    ok = false;
+  } else {
+    console.log("  ✓ employee3@demo.com draft sheet (2 goals)");
+  }
 
   const rules = await prisma.escalationRule.count({ where: { isActive: true } });
   console.log(`  ✓ Active escalation rules: ${rules}`);

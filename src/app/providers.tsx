@@ -13,7 +13,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>{children}</TooltipProvider>
-        <Toaster richColors position="top-right" />
+        <Toaster
+          richColors
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              toast: "rounded-xl border shadow-card backdrop-blur-sm",
+            },
+          }}
+        />
       </QueryClientProvider>
     </SessionProvider>
   );

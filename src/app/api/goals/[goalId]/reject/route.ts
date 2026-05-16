@@ -5,6 +5,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { rejectSheetSchema } from "@/lib/validations/goal.schema";
 import { createNotification, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
 import { sendGoalRejectedEmail } from "@/lib/email/resend";
+import { getRequestIp } from "@/lib/request-ip";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       isLocked: false,
       lockedAt: null,
       lockedBy: null,
+      submittedAt: null,
       rejectedAt: new Date(),
       managerNote: parsed.data.managerNote,
     },
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     previousValues: { status: sheet.status },
     newValues: { status: "REWORK" },
     metadata: { managerNote: parsed.data.managerNote },
+    ipAddress: getRequestIp(req),
   });
 
   await createNotification({

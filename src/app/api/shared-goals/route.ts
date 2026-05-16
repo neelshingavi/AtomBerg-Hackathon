@@ -3,7 +3,7 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession, requireRoles } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
 import { sharedGoalPushSchema } from "@/lib/validations/goal.schema";
-import { createNotification } from "@/lib/goals";
+import { createNotification, editableStatuses } from "@/lib/goals";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -107,6 +107,10 @@ export async function POST(req: NextRequest) {
           },
           include: { goals: true },
         });
+      }
+
+      if (sheet.isLocked || !editableStatuses().includes(sheet.status)) {
+        continue;
       }
 
       if (sheet.goals.length >= 8) continue;
