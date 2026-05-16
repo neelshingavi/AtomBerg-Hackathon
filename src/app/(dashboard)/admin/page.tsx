@@ -3,91 +3,124 @@ import { redirect } from "next/navigation";
 import { Topbar } from "@/components/layout/Topbar";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { prisma } from "@/lib/prisma";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
-import { PageHeader } from "@/components/ui/page-header";
-import { Users, UserCog, Clock, Building2, Calendar, BarChart3, Layers } from "lucide-react";
-import { StaggerGrid, StaggerItem, FadeIn } from "@/components/motion";
-import { MotionCard } from "@/components/motion";
-import Link from "next/link";
-
-const quickLinks = [
-  { href: "/admin/users", label: "Users", icon: Users, desc: "Manage accounts & roles" },
-  { href: "/admin/departments", label: "Departments", icon: Building2, desc: "Org structure" },
-  { href: "/admin/cycles", label: "Cycles", icon: Calendar, desc: "FY windows & phases" },
-  { href: "/admin/reports/achievement", label: "Reports", icon: BarChart3, desc: "Export achievements" },
-  { href: "/admin/thrust-areas", label: "Thrust areas", icon: Layers, desc: "Strategic pillars" },
-  { href: "/admin/audit-log", label: "Audit log", icon: Clock, desc: "Compliance trail" },
-];
+import { getActiveCycle, getActiveQuarter } from "@/lib/cycle";
+import { calculateSheetScore } from "@/lib/calculations/progress";
+import { AdminDashboardView } from "@/components/dashboard/admin/AdminDashboardView";
 
 export default async function AdminDashboard() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [employees, managers, pending] = await Promise.all([
+  const cycle = await getActiveCycle();
+  const activeQuarter = (cycle ? getActiveQuarter(cycle) : null) ?? "Q1";
+
+  const [
+    employees,
+    managers,
+    pending,
+    activeEscalations,
+    lockedGoals,
+    recentAudits,
+    escalationByRule,
+    approvedSheets,
+    activeUsers,
+  ] = await Promise.all([
     prisma.user.count({ where: { role: "EMPLOYEE", isActive: true } }),
     prisma.user.count({ where: { role: "MANAGER", isActive: true } }),
     prisma.goalSheet.count({ where: { status: "SUBMITTED" } }),
+    prisma.escalationLog.count({
+      where: { status: { in: ["PENDING", "NOTIFIED", "ESCALATED"] } },
+    }),
+    prisma.goalSheet.count({ where: { isLocked: true } }),
+    prisma.auditLog.count({
+      where: { createdAt: { gte: new Date(Date.now() - 7 * 86400000) } },
+    }),
+    prisma.escalationLog.groupBy({
+      by: ["ruleId"],
+      _count: { id: true },
+      where: { createdAt: { gte: new Date(Date.now() - 90 * 86400000) } },
+    }),
+    cycle
+      ? prisma.goalSheet.findMany({
+          where: { cycleId: cycle.id, status: "APPROVED" },
+          include: { goals: { include: { achievements: true } } },
+        })
+      : Promise.resolve([]),
+    prisma.session.count({
+      where: { expires: { gt: new Date() } },
+    }),
   ]);
+
+  let orgTotal = 0;
+  let compliant = 0;
+  for (const sheet of approvedSheets) {
+    const goalsData = sheet.goals.map((g) => ({
+      weightage: g.weightage,
+      achievements: g.achievements.map((a) => ({
+        quarter: a.quarter,
+        progressScore: a.progressScore,
+      })),
+    }));
+    const pct = calculateSheetScore(goalsData, activeQuarter) * 100;
+    orgTotal += pct;
+    if (
+      sheet.goals.every((g) =>
+        g.achievements.some((a) => a.quarter === activeQuarter && a.actualValue != null)
+      )
+    ) {
+      compliant++;
+    }
+  }
+
+  const orgCompletionPct =
+    approvedSheets.length > 0 ? Math.round(orgTotal / approvedSheets.length) : 0;
+  const checkinCompliance =
+    approvedSheets.length > 0
+      ? Math.round((compliant / approvedSheets.length) * 100)
+      : 100;
+
+  const rules = await prisma.escalationRule.findMany({
+    where: { id: { in: escalationByRule.map((e) => e.ruleId) } },
+    select: { id: true, trigger: true },
+  });
+  const ruleMap = Object.fromEntries(
+    rules.map((r) => [r.id, r.trigger.replace(/_/g, " ")])
+  );
+
+  const escalationTrend = escalationByRule
+    .map((e) => ({
+      label: ruleMap[e.ruleId] ?? "Unknown",
+      count: e._count.id,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const delayedManagers = await prisma.goalSheet.count({
+    where: { status: "SUBMITTED", submittedAt: { lt: new Date(Date.now() - 5 * 86400000) } },
+  });
 
   return (
     <>
       <Topbar title="Admin dashboard" />
       <PageContainer>
-        <PageHeader
-          title="Organization control"
-          description="Configure cycles, manage users, and monitor goal completion across Atomberg."
+        <AdminDashboardView
+          orgCompletionPct={orgCompletionPct}
+          activeEscalations={activeEscalations}
+          delayedManagers={delayedManagers}
+          checkinCompliance={checkinCompliance}
+          lockedGoals={lockedGoals}
+          unresolvedAudits={recentAudits}
+          employees={employees}
+          managers={managers}
+          pendingApprovals={pending}
+          escalationTrend={escalationTrend}
+          systemHealth={{
+            activeUsers: activeUsers,
+            apiHealth: "healthy",
+            backgroundJobs: "Running",
+            notifications: "Delivering",
+          }}
         />
-
-        <DashboardStats
-          className="mb-8 grid gap-4 sm:grid-cols-3"
-          items={[
-            {
-              label: "Employees",
-              value: employees,
-              icon: Users,
-              accent: "info",
-            },
-            {
-              label: "Managers",
-              value: managers,
-              icon: UserCog,
-              accent: "default",
-            },
-            {
-              label: "Pending approvals",
-              value: pending,
-              hint: "Org-wide submitted",
-              icon: Clock,
-              accent: pending > 0 ? "warning" : "success",
-            },
-          ]}
-        />
-
-        <FadeIn>
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Quick access
-          </h3>
-          <StaggerGrid className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {quickLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <StaggerItem key={link.href}>
-                  <Link href={link.href}>
-                    <MotionCard className="group flex items-start gap-4 rounded-xl border bg-card p-5 shadow-card transition-colors hover:border-brand-200 hover:bg-brand-50/20">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-600 transition-transform group-hover:scale-105">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold">{link.label}</p>
-                        <p className="mt-0.5 text-sm text-muted-foreground">{link.desc}</p>
-                      </div>
-                    </MotionCard>
-                  </Link>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGrid>
-        </FadeIn>
       </PageContainer>
     </>
   );

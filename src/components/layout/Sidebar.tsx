@@ -18,10 +18,12 @@ import {
   BarChart3,
   ClipboardList,
   ClipboardCheck,
+  Activity,
   TrendingUp,
   AlertTriangle,
   Settings,
   Sparkles,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -58,14 +60,17 @@ export function Sidebar({
       badge: pendingCount,
     },
     { href: "/manager/team", label: "My Team", icon: Users },
+    { href: "/manager/activity", label: "Activity Center", icon: Activity },
     { href: "/manager/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/manager/shared-goals", label: "Push Shared Goals", icon: Share2 },
   ];
 
   const adminNav: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/executive", label: "Executive", icon: Brain },
     { href: "/admin/shared-goals", label: "Shared Goals", icon: Share2 },
     { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/activity", label: "Activity Center", icon: Activity },
     { href: "/admin/departments", label: "Departments", icon: Building2 },
     { href: "/admin/thrust-areas", label: "Thrust Areas", icon: Layers },
     { href: "/admin/cycles", label: "Cycles", icon: Calendar },

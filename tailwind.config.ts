@@ -13,6 +13,20 @@ const config: Config = {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
+      fontSize: {
+        hero: ["1.875rem", { lineHeight: "2.25rem", fontWeight: "600", letterSpacing: "-0.02em" }],
+        "section-title": ["1.125rem", { lineHeight: "1.5rem", fontWeight: "600", letterSpacing: "-0.01em" }],
+        "dashboard-title": ["1rem", { lineHeight: "1.375rem", fontWeight: "600" }],
+        "card-title": ["0.875rem", { lineHeight: "1.25rem", fontWeight: "600" }],
+      },
+      spacing: {
+        "ds-1": "var(--space-1)",
+        "ds-2": "var(--space-2)",
+        "ds-3": "var(--space-3)",
+        "ds-4": "var(--space-4)",
+        "ds-6": "var(--space-6)",
+        "ds-8": "var(--space-8)",
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -44,6 +58,22 @@ const config: Config = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          foreground: "hsl(var(--danger-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -72,13 +102,17 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
       },
       boxShadow: {
-        card: "0 1px 2px hsl(222 47% 11% / 0.04), 0 4px 16px hsl(222 47% 11% / 0.06)",
+        card: "0 1px 2px hsl(222 47% 11% / 0.04), 0 2px 8px hsl(222 47% 11% / 0.05)",
         "card-hover":
-          "0 4px 8px hsl(222 47% 11% / 0.04), 0 12px 32px hsl(217 91% 60% / 0.12)",
-        glow: "0 0 40px hsl(217 91% 60% / 0.15)",
-        "inner-glow": "inset 0 1px 0 0 hsl(0 0% 100% / 0.06)",
+          "0 4px 12px hsl(222 47% 11% / 0.06), 0 8px 24px hsl(217 91% 60% / 0.08)",
+        "elevation-sm": "0 1px 2px hsl(222 47% 11% / 0.05)",
+        "elevation-md": "0 2px 8px hsl(222 47% 11% / 0.06), 0 1px 2px hsl(222 47% 11% / 0.04)",
+        "elevation-lg": "0 8px 24px hsl(222 47% 11% / 0.08), 0 2px 8px hsl(222 47% 11% / 0.04)",
+        glow: "0 0 32px hsl(217 91% 60% / 0.12)",
       },
       keyframes: {
         "fade-in": {
@@ -86,33 +120,28 @@ const config: Config = {
           to: { opacity: "1" },
         },
         "fade-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
+          from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "slide-in-right": {
-          from: { opacity: "0", transform: "translateX(-8px)" },
+          from: { opacity: "0", transform: "translateX(-6px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
-        "pulse-soft": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.7" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
+        "drawer-in": {
+          from: { transform: "translateX(100%)" },
+          to: { transform: "translateX(0)" },
         },
       },
       animation: {
-        "fade-in": "fade-in 0.4s ease-out forwards",
-        "fade-up": "fade-up 0.5s ease-out forwards",
-        "slide-in-right": "slide-in-right 0.3s ease-out forwards",
-        shimmer: "shimmer 2.5s linear infinite",
-        "pulse-soft": "pulse-soft 2.5s ease-in-out infinite",
-        float: "float 4s ease-in-out infinite",
+        "fade-in": "fade-in 0.35s ease-out forwards",
+        "fade-up": "fade-up 0.4s ease-out forwards",
+        "slide-in-right": "slide-in-right 0.25s ease-out forwards",
+        shimmer: "shimmer 2s linear infinite",
+        "drawer-in": "drawer-in 0.3s ease-out forwards",
       },
     },
   },

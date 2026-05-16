@@ -5,7 +5,6 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { GoalTable } from "@/components/goals/GoalTable";
 import { ButtonLink } from "@/components/ui/button-link";
 import { useGoalSheets } from "@/hooks/useGoals";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EmployeeGoalsPage() {
   const { data, isLoading } = useGoalSheets();
@@ -19,11 +18,7 @@ export default function EmployeeGoalsPage() {
           <ButtonLink href="/employee/goals/new">New goal sheet</ButtonLink>
         </div>
 
-        {isLoading ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          <GoalTable sheets={data?.goalSheets ?? []} />
-        )}
+        <GoalTable sheets={data?.goalSheets ?? []} isLoading={isLoading} />
       </PageContainer>
     </>
   );

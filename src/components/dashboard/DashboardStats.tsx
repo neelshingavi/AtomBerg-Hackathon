@@ -14,6 +14,8 @@ export function DashboardStats({
     hint?: string;
     icon?: LucideIcon;
     accent?: "default" | "success" | "warning" | "info" | "neutral";
+    trend?: "up" | "down" | "neutral";
+    trendLabel?: string;
   }>;
   className?: string;
 }) {

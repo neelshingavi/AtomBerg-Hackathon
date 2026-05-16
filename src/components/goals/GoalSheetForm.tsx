@@ -22,6 +22,7 @@ import { WeightageBar } from "@/components/goals/WeightageBar";
 import { UoMSelector } from "@/components/goals/UoMSelector";
 import { useThrustAreas } from "@/hooks/useGoals";
 import { validateSubmission, validateWeightage } from "@/lib/calculations/weightage";
+import { weightageMessage } from "@/lib/form-messages";
 import { uomTypeSchema } from "@/lib/validations/goal.schema";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -183,7 +184,12 @@ export function GoalSheetForm({
       : validateWeightage(values.goals.map((g) => ({ title: g.title, weightage: Number(g.weightage) })));
 
     if (!check.isValid) {
-      toast.error(check.errors[0]);
+      const total = values.goals.reduce((s, g) => s + (Number(g.weightage) || 0), 0);
+      toast.error(
+        check.errors[0]?.toLowerCase().includes("weightage")
+          ? weightageMessage(total)
+          : check.errors[0]
+      );
       return;
     }
 

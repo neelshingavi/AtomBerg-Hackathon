@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedEnterpriseData } from "./seed-enterprise";
 
 const prisma = new PrismaClient();
 
@@ -532,6 +533,22 @@ async function main() {
       value: cycle.id,
       description: "The currently active goal cycle ID",
     },
+  });
+
+  await seedEnterpriseData(prisma, {
+    departments: [
+      { id: engineering.id, code: "ENG" },
+      { id: hr.id, code: "HR" },
+      { id: finance.id, code: "FIN" },
+      { id: ops.id, code: "OPS" },
+    ],
+    cycleId: cycle.id,
+    passwordHash,
+    managers: [
+      { id: manager.id, departmentId: engineering.id },
+      { id: manager2.id, departmentId: ops.id },
+      { id: manager3.id, departmentId: finance.id },
+    ],
   });
 
   console.log("✅ Seed completed!");

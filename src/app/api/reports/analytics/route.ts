@@ -19,9 +19,13 @@ export async function GET(req: NextRequest) {
   if (!cycleId) return apiError("cycleId is required");
 
   const managerId =
-    session.user.role === "MANAGER" ? session.user.id : undefined;
+    session.user.role === "MANAGER"
+      ? session.user.id
+      : req.nextUrl.searchParams.get("managerId") ?? undefined;
 
-  const data = await buildAnalyticsReport({ cycleId, managerId });
+  const departmentId = req.nextUrl.searchParams.get("departmentId") ?? undefined;
+
+  const data = await buildAnalyticsReport({ cycleId, managerId, departmentId });
 
   const cycle = await prisma.goalCycle.findUnique({
     where: { id: cycleId },

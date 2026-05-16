@@ -15,13 +15,23 @@ export async function GET(req: NextRequest) {
 
   const goalSheetId = searchParams.get("goalSheetId") ?? undefined;
   const userId = searchParams.get("userId") ?? undefined;
+  const entityType = searchParams.get("entityType") ?? undefined;
+  const entityId = searchParams.get("entityId") ?? undefined;
+  const departmentId = searchParams.get("departmentId") ?? undefined;
   const action = (searchParams.get("action") as AuditAction | null) ?? undefined;
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
   let where: Prisma.AuditLogWhereInput = {
     ...(goalSheetId ? { goalSheetId } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(entityId ? { entityId } : {}),
     ...(action ? { action } : {}),
+    ...(departmentId
+      ? {
+          goalSheet: { employee: { departmentId } },
+        }
+      : {}),
     ...(from || to
       ? {
           createdAt: {

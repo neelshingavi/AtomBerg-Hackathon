@@ -5,6 +5,7 @@ import { getPhaseLabel } from "@/lib/cycle";
 import type { CyclePhase } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FadeIn } from "@/components/motion";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,8 @@ export function Topbar({ title }: { title?: string }) {
           </h1>
         )}
       </FadeIn>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <GlobalSearch />
         {cycle && phase && (
           <Badge
             variant="outline"
