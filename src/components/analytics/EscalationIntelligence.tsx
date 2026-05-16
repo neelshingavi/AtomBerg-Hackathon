@@ -88,7 +88,7 @@ export function EscalationIntelligence({ compact = false }: { compact?: boolean 
                     cy="50%"
                     innerRadius={50}
                     outerRadius={75}
-                    label={({ severity, count }) => `${severity}: ${count}`}
+                    label={({ name, value }) => `${name}: ${value}`}
                   >
                     {(data?.severityDistribution ?? []).map((entry) => (
                       <Cell

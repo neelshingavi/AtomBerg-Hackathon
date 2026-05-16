@@ -551,6 +551,9 @@ async function main() {
     ],
   });
 
+  const { seedDefaultAutomationRules } = await import("../src/lib/automation/engine");
+  await seedDefaultAutomationRules();
+
   console.log("✅ Seed completed!");
   console.log("");
   console.log("📋 Demo Credentials (password: password123)");

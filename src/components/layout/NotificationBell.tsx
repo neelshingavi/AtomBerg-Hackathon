@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -117,6 +118,11 @@ export function NotificationBell() {
           )}
         </div>
 
+        <div className="border-b px-3 py-2">
+          <ButtonLink href="/notifications" size="sm" variant="outline" className="w-full h-8 text-xs">
+            Open full inbox
+          </ButtonLink>
+        </div>
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-9 px-2 gap-1">
             <TabsTrigger

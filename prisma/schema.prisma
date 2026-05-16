@@ -73,6 +73,45 @@ enum AuditAction {
   CHECKIN_ADDED
   SHARED_GOAL_PUSHED
   WEIGHTAGE_UPDATED
+  COMMENT_ADDED
+  AUTOMATION_EXECUTED
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum NotificationCategory {
+  APPROVAL
+  REMINDER
+  ESCALATION
+  COMMENT
+  UNLOCK
+  SHARED_GOAL
+  CYCLE
+  DEADLINE
+  RISK
+  SYSTEM
+  AUTOMATION
+}
+
+enum AutomationTrigger {
+  GOAL_SUBMITTED
+  APPROVAL_DELAYED
+  CHECKIN_MISSED
+  HIGH_RISK
+  COMPLETION_MILESTONE
+  INACTIVE_EMPLOYEE
+}
+
+enum CommentEntityType {
+  GOAL_SHEET
+  GOAL
+  CHECKIN
+  ESCALATION
 }
 
 model Department {
@@ -163,7 +202,8 @@ model User {
   escalationsEmployee EscalationLog[]  @relation("EscalationEmployee")
   escalationsManager  EscalationLog[]  @relation("EscalationManager")
   sharedGoalsPushed   SharedGoal[]     @relation("PushedBy")
-  notifications       Notification[]
+  notifications      Notification[]
+  discussionComments DiscussionComment[] @relation("CommentAuthor")
 
   @@index([departmentId])
   @@index([managerId])
@@ -249,6 +289,7 @@ model GoalSheet {
   goals           Goal[]
   auditLogs       AuditLog[]
   checkinComments CheckinComment[]
+  discussionComments DiscussionComment[]
 
   @@unique([employeeId, cycleId])
   @@index([employeeId])
@@ -450,21 +491,105 @@ model Notification {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  type    String
-  title   String
-  message String
-  link    String?
+  type     String
+  title    String
+  message  String
+  link     String?
+  priority NotificationPriority @default(MEDIUM)
+  category NotificationCategory @default(SYSTEM)
 
-  isRead Boolean   @default(false)
-  readAt DateTime?
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  dismissedAt DateTime?
+
+  entityType String?
+  entityId   String?
 
   metadata Json?
 
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
+  @@index([userId, category])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model DiscussionComment {
+  id       String  @id @default(cuid())
+  parentId String?
+  parent   DiscussionComment?  @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  DiscussionComment[] @relation("CommentThread")
+
+  entityType CommentEntityType
+  entityId   String
+  goalSheetId String?
+  goalSheet   GoalSheet? @relation(fields: [goalSheetId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  body     String
+  mentions Json?
+  isEdited Boolean  @default(false)
+  isPrivate Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([goalSheetId])
+  @@index([parentId])
+  @@map("discussion_comments")
+}
+
+model AutomationRule {
+  id           String            @id @default(cuid())
+  name         String
+  description  String?
+  trigger      AutomationTrigger
+  conditions   Json              @default("{}")
+  actions      Json
+  delayMinutes Int               @default(0)
+  isActive     Boolean           @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs AutomationRun[]
+
+  @@map("automation_rules")
+}
+
+model AutomationRun {
+  id     String         @id @default(cuid())
+  ruleId String
+  rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  status   String
+  metadata Json?
+  error    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([ruleId])
+  @@index([createdAt])
+  @@map("automation_runs")
+}
+
+model SystemJobRun {
+  id         String  @id @default(cuid())
+  jobType    String
+  status     String
+  durationMs Int?
+  error      String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([jobType])
+  @@index([createdAt])
+  @@map("system_job_runs")
 }
 
 model SystemConfig {

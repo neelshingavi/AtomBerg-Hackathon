@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import type { GoalStatus, Prisma } from "@prisma/client";
 
 export const goalSheetInclude = {
@@ -49,17 +48,13 @@ export async function createNotification(params: {
   message: string;
   link?: string;
   metadata?: Record<string, unknown>;
+  priority?: import("@prisma/client").NotificationPriority;
+  category?: import("@prisma/client").NotificationCategory;
+  entityType?: string;
+  entityId?: string;
 }) {
-  return prisma.notification.create({
-    data: {
-      userId: params.userId,
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      link: params.link,
-      metadata: params.metadata as Prisma.InputJsonValue | undefined,
-    },
-  });
+  const { createEnhancedNotification } = await import("@/lib/notifications/enhanced");
+  return createEnhancedNotification(params);
 }
 
 export function editableStatuses(): GoalStatus[] {

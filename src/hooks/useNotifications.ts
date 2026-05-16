@@ -8,8 +8,12 @@ export type NotificationItem = {
   title: string;
   message: string;
   link: string | null;
+  priority?: string;
+  category?: string;
   isRead: boolean;
   createdAt: string;
+  entityType?: string | null;
+  entityId?: string | null;
 };
 
 export function useNotifications() {
@@ -24,7 +28,7 @@ export function useNotifications() {
         unreadCount: number;
       };
     },
-    refetchInterval: 60_000,
+    refetchInterval: 15_000,
   });
 }
 

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 const TEAMS_WEBHOOK_KEY = "teams_webhook_url";
 
-async function getTeamsWebhookUrl(): Promise<string | null> {
+export async function getTeamsWebhookUrl(): Promise<string | null> {
   const row = await prisma.systemConfig.findUnique({
     where: { key: TEAMS_WEBHOOK_KEY },
   });
@@ -71,6 +71,9 @@ export async function sendTeamsNotification(
   }
 }
 
+const baseUrl = () =>
+  process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+
 export async function notifyGoalSubmittedTeams(
   employeeName: string,
   sheetId: string
@@ -78,18 +81,92 @@ export async function notifyGoalSubmittedTeams(
   const webhookUrl = await getTeamsWebhookUrl();
   if (!webhookUrl) return;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-
   try {
     await sendTeamsNotification(
       webhookUrl,
       "Goal sheet submitted",
       `${employeeName} has submitted their goals for review. Please approve or provide feedback within 5 working days.`,
-      `${baseUrl}/manager/approvals/${sheetId}`,
+      `${baseUrl()}/manager/approvals/${sheetId}`,
       "Review goals"
     );
   } catch (e) {
     console.error("[teams] notify failed:", e);
+  }
+}
+
+export async function notifyGoalApprovedTeams(
+  employeeName: string,
+  managerName: string,
+  sheetId: string
+) {
+  const webhookUrl = await getTeamsWebhookUrl();
+  if (!webhookUrl) return;
+  try {
+    await sendTeamsNotification(
+      webhookUrl,
+      "Goals approved",
+      `${managerName} approved ${employeeName}'s goal sheet.`,
+      `${baseUrl()}/employee/goals/${sheetId}`,
+      "View goals"
+    );
+  } catch (e) {
+    console.error("[teams] approved notify failed:", e);
+  }
+}
+
+export async function notifyEscalationTeams(
+  employeeName: string,
+  triggerLabel: string
+) {
+  const webhookUrl = await getTeamsWebhookUrl();
+  if (!webhookUrl) return;
+  try {
+    await sendTeamsNotification(
+      webhookUrl,
+      "Escalation triggered",
+      `${employeeName}: ${triggerLabel}. Immediate attention required.`,
+      `${baseUrl()}/admin/escalations`,
+      "View escalations"
+    );
+  } catch (e) {
+    console.error("[teams] escalation notify failed:", e);
+  }
+}
+
+export async function notifySharedGoalPushedTeams(
+  title: string,
+  count: number
+) {
+  const webhookUrl = await getTeamsWebhookUrl();
+  if (!webhookUrl) return;
+  try {
+    await sendTeamsNotification(
+      webhookUrl,
+      "Shared goal assigned",
+      `"${title}" pushed to ${count} employee(s).`,
+      `${baseUrl()}/admin/shared-goals`,
+      "View shared goals"
+    );
+  } catch (e) {
+    console.error("[teams] shared goal notify failed:", e);
+  }
+}
+
+export async function notifyCheckinReminderTeams(
+  employeeName: string,
+  quarter: string
+) {
+  const webhookUrl = await getTeamsWebhookUrl();
+  if (!webhookUrl) return;
+  try {
+    await sendTeamsNotification(
+      webhookUrl,
+      "Check-in reminder",
+      `${employeeName} has a pending ${quarter} check-in.`,
+      `${baseUrl()}/manager/team`,
+      "Review team"
+    );
+  } catch (e) {
+    console.error("[teams] checkin notify failed:", e);
   }
 }

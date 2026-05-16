@@ -223,6 +223,9 @@ async function upsertAchievement(
     },
   });
 
+  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+  await bumpRealtimeVersion("achievement_logged");
+
   return {
     achievement: {
       ...achievement,

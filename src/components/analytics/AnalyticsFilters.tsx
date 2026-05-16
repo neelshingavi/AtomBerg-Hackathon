@@ -81,7 +81,7 @@ export function AnalyticsFilters({
   return (
     <div className="flex flex-wrap items-end gap-3">
       <FilterField label="Cycle">
-        <Select value={activeCycleId} onValueChange={setCycleId}>
+        <Select value={activeCycleId} onValueChange={(v) => setCycleId(v ?? "")}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select cycle" />
           </SelectTrigger>
@@ -99,7 +99,7 @@ export function AnalyticsFilters({
         <FilterField label="Department">
           <Select
             value={departmentId || "all"}
-            onValueChange={(v) => setDepartmentId(v === "all" ? "" : v)}
+            onValueChange={(v) => setDepartmentId(!v || v === "all" ? "" : v)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All departments" />
@@ -120,7 +120,7 @@ export function AnalyticsFilters({
         <FilterField label="Quarter">
           <Select
             value={quarter || "all"}
-            onValueChange={(v) => setQuarter(v === "all" ? "" : v)}
+            onValueChange={(v) => setQuarter(!v || v === "all" ? "" : v)}
           >
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="All quarters" />

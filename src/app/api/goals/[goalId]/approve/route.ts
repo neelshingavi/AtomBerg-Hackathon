@@ -195,5 +195,14 @@ export async function POST(req: NextRequest, context: RouteContext) {
     console.error("[approve] email failed:", e);
   }
 
+  const { notifyGoalApprovedTeams } = await import("@/lib/teams/webhook");
+  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+  void notifyGoalApprovedTeams(
+    sheet.employee.name,
+    session.user.name ?? "Manager",
+    goalSheetId
+  );
+  await bumpRealtimeVersion("goal_approved");
+
   return apiSuccess({ goalSheet: serializeGoalSheet(updated) });
 }

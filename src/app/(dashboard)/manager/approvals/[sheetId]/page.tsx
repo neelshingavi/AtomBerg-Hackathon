@@ -24,6 +24,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { validateSubmission } from "@/lib/calculations/weightage";
+import { CommentThread } from "@/components/comments/CommentThread";
+import { EntityTimeline } from "@/components/audit/entity-timeline";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function ManagerReviewPage() {
   const params = useParams();
@@ -196,6 +199,25 @@ export default function ManagerReviewPage() {
             onChange={(e) => setManagerNote(e.target.value)}
             placeholder="Optional feedback for the employee"
           />
+        </div>
+
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <Card className="enterprise-card">
+            <CardHeader>
+              <CardTitle className="text-base">Discussion</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CommentThread entityType="GOAL_SHEET" entityId={sheetId} goalSheetId={sheetId} />
+            </CardContent>
+          </Card>
+          <Card className="enterprise-card">
+            <CardHeader>
+              <CardTitle className="text-base">Audit timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EntityTimeline goalSheetId={sheetId} limit={12} />
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mt-6 flex gap-3">

@@ -24,6 +24,9 @@ import {
   Settings,
   Sparkles,
   Brain,
+  Bell,
+  Zap,
+  Gauge,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +52,7 @@ export function Sidebar({
     { href: "/employee/goals", label: "My Goals", icon: Target },
     { href: "/employee/checkins", label: "Check-ins", icon: ClipboardCheck },
     { href: "/employee/shared-goals", label: "Shared Goals", icon: Share2 },
+    { href: "/notifications", label: "Inbox", icon: Bell },
   ];
 
   const managerNav: NavItem[] = [
@@ -63,6 +67,7 @@ export function Sidebar({
     { href: "/manager/activity", label: "Activity Center", icon: Activity },
     { href: "/manager/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/manager/shared-goals", label: "Push Shared Goals", icon: Share2 },
+    { href: "/notifications", label: "Inbox", icon: Bell },
   ];
 
   const adminNav: NavItem[] = [
@@ -78,8 +83,11 @@ export function Sidebar({
     { href: "/admin/reports/completion", label: "Completion", icon: ClipboardList },
     { href: "/admin/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/admin/escalations", label: "Escalations", icon: AlertTriangle },
+    { href: "/admin/automation", label: "Automation", icon: Zap },
+    { href: "/admin/observability", label: "Observability", icon: Gauge },
     { href: "/admin/settings", label: "Integrations", icon: Settings },
     { href: "/admin/audit-log", label: "Audit Log", icon: FileText },
+    { href: "/notifications", label: "Inbox", icon: Bell },
   ];
 
   function renderNav(items: NavItem[]) {

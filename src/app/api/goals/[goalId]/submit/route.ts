@@ -122,6 +122,17 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     void notifyGoalSubmittedTeams(sheet.employee.name, goalSheetId);
+
+    const { runAutomationForTrigger } = await import("@/lib/automation/engine");
+    const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+    void runAutomationForTrigger("GOAL_SUBMITTED", {
+      goalSheetId,
+      employeeId: sheet.employeeId,
+      managerId: sheet.managerId ?? undefined,
+      entityType: "GoalSheet",
+      entityId: goalSheetId,
+    });
+    await bumpRealtimeVersion("goal_submitted");
   }
 
   return apiSuccess({ goalSheet: serializeGoalSheet(updated) });

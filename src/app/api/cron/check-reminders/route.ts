@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const start = Date.now();
   const activeCycle = await getActiveCycle();
   if (!activeCycle) {
     return NextResponse.json({ success: true, message: "No active cycle" });
@@ -69,15 +70,28 @@ export async function GET(req: NextRequest) {
 
     await createNotification({
       userId: sheet.employeeId,
-      type: "CHECKIN_REMINDER",
+      type: "REMINDER",
       title: `${activeQuarter} check-in due`,
       message: `Please update your achievements for ${activeQuarter}. The window is open now.`,
       link: `/employee/goals/${sheet.id}/checkin`,
+      category: "REMINDER",
+      priority: "MEDIUM",
       metadata: { quarter: activeQuarter, cycleId: activeCycle.id },
     });
 
     reminded.push(sheet.employeeId);
   }
+
+  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+  if (reminded.length) await bumpRealtimeVersion("checkin_reminder");
+
+  const { trackJobRun } = await import("@/lib/observability/tracker");
+  await trackJobRun({
+    jobType: "cron:check-reminders",
+    status: "success",
+    durationMs: Date.now() - start,
+    metadata: { remindedCount: reminded.length },
+  });
 
   return NextResponse.json({
     success: true,

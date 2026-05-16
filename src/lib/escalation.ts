@@ -7,6 +7,8 @@ import {
   type Quarter,
 } from "@/lib/cycle";
 import { sendEscalationAlertEmail } from "@/lib/email/resend";
+import { notifyEscalationTeams } from "@/lib/teams/webhook";
+import { bumpRealtimeVersion } from "@/lib/realtime/events";
 import { prisma } from "@/lib/prisma";
 
 const TRIGGER_LABELS: Record<string, string> = {
@@ -83,6 +85,9 @@ async function createEscalation(
       console.error("[escalation] email failed:", e);
     }
   }
+
+  void notifyEscalationTeams(employee.name, triggerLabel);
+  await bumpRealtimeVersion("escalation");
 
   return log;
 }
