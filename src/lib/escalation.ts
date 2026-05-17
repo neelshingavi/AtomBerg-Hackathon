@@ -62,13 +62,20 @@ async function createEscalation(
     }
   }
 
-  for (const { user } of recipients) {
+  for (const { user, role } of recipients) {
+    const link =
+      role === "manager"
+        ? "/manager/approvals"
+        : role === "employee"
+          ? "/employee/goals"
+          : "/admin";
+
     await createNotification({
       userId: user.id,
       type: "ESCALATION",
       title: `Escalation: ${triggerLabel}`,
       message: `${employee.name} — ${cycle.name}`,
-      link: user.role === "MANAGER" ? "/manager/approvals" : "/admin",
+      link,
       metadata: { escalationLogId: log.id, trigger: rule.trigger },
     });
 
@@ -125,10 +132,12 @@ export async function runEscalationEngine() {
           include: { manager: true },
         });
 
-        for (const employee of employees) {
-          const log = await createEscalation(rule, employee, activeCycle, employee.manager);
-          if (log) created++;
-        }
+        const logs = await Promise.all(
+          employees.map((employee) =>
+            createEscalation(rule, employee, activeCycle, employee.manager)
+          )
+        );
+        created += logs.filter(Boolean).length;
         break;
       }
 
@@ -142,15 +151,12 @@ export async function runEscalationEngine() {
           include: { employee: true, manager: true },
         });
 
-        for (const sheet of pendingSheets) {
-          const log = await createEscalation(
-            rule,
-            sheet.employee,
-            activeCycle,
-            sheet.manager
-          );
-          if (log) created++;
-        }
+        const approvalLogs = await Promise.all(
+          pendingSheets.map((sheet) =>
+            createEscalation(rule, sheet.employee, activeCycle, sheet.manager)
+          )
+        );
+        created += approvalLogs.filter(Boolean).length;
         break;
       }
 
@@ -183,15 +189,12 @@ export async function runEscalationEngine() {
           include: { employee: true, manager: true },
         });
 
-        for (const sheet of overdueSheets) {
-          const log = await createEscalation(
-            rule,
-            sheet.employee,
-            activeCycle,
-            sheet.manager
-          );
-          if (log) created++;
-        }
+        const checkinLogs = await Promise.all(
+          overdueSheets.map((sheet) =>
+            createEscalation(rule, sheet.employee, activeCycle, sheet.manager)
+          )
+        );
+        created += checkinLogs.filter(Boolean).length;
         break;
       }
     }

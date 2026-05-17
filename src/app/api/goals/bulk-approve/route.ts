@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession, requireRoles } from "@/lib/api-auth";
-import { writeAuditLog } from "@/lib/audit";
 import { createNotification } from "@/lib/goals";
 import { getRequestIp } from "@/lib/request-ip";
 import { prisma } from "@/lib/prisma";
@@ -33,65 +32,84 @@ export async function POST(req: NextRequest) {
 
   const { goalSheetIds, managerNote } = parsed.data;
   const clientIp = getRequestIp(req);
-  const approved: string[] = [];
-  const failed: Array<{ id: string; reason: string }> = [];
 
-  for (const goalSheetId of goalSheetIds) {
-    const sheet = await prisma.goalSheet.findUnique({
-      where: { id: goalSheetId },
+  const { approved, failed, approvable } = await prisma.$transaction(async (tx) => {
+    const approved: string[] = [];
+    const failed: Array<{ id: string; reason: string }> = [];
+
+    const sheets = await tx.goalSheet.findMany({
+      where: { id: { in: goalSheetIds } },
       include: { employee: true, cycle: true },
     });
 
-    if (!sheet) {
-      failed.push({ id: goalSheetId, reason: "Not found" });
-      continue;
+    const sheetById = new Map(sheets.map((s) => [s.id, s]));
+    const approvable: typeof sheets = [];
+
+    for (const goalSheetId of goalSheetIds) {
+      const sheet = sheetById.get(goalSheetId);
+      if (!sheet) {
+        failed.push({ id: goalSheetId, reason: "Not found" });
+        continue;
+      }
+
+      if (session.user.role === "MANAGER" && sheet.managerId !== session.user.id) {
+        failed.push({ id: goalSheetId, reason: "Forbidden" });
+        continue;
+      }
+
+      if (!["SUBMITTED", "UNDER_REVIEW"].includes(sheet.status)) {
+        failed.push({ id: goalSheetId, reason: `Invalid status ${sheet.status}` });
+        continue;
+      }
+
+      approvable.push(sheet);
     }
 
-    if (session.user.role === "MANAGER" && sheet.managerId !== session.user.id) {
-      failed.push({ id: goalSheetId, reason: "Forbidden" });
-      continue;
+    if (approvable.length > 0) {
+      const now = new Date();
+      const approvableIds = approvable.map((s) => s.id);
+
+      await tx.goalSheet.updateMany({
+        where: { id: { in: approvableIds } },
+        data: {
+          status: "APPROVED",
+          isLocked: true,
+          lockedAt: now,
+          lockedBy: session.user.id,
+          approvedAt: now,
+          ...(managerNote !== undefined ? { managerNote } : {}),
+        },
+      });
+
+      await tx.auditLog.createMany({
+        data: approvable.map((s) => ({
+          action: "APPROVED" as const,
+          entityType: "GoalSheet",
+          entityId: s.id,
+          createdById: session.user.id,
+          affectedUserId: s.employeeId,
+          goalSheetId: s.id,
+          previousValues: { status: s.status, isLocked: s.isLocked },
+          newValues: { status: "APPROVED", isLocked: true },
+          metadata: { bulk: true, managerNote },
+          ipAddress: clientIp,
+        })),
+      });
+
+      approved.push(...approvableIds);
     }
 
-    if (!["SUBMITTED", "UNDER_REVIEW"].includes(sheet.status)) {
-      failed.push({ id: goalSheetId, reason: `Invalid status ${sheet.status}` });
-      continue;
-    }
+    return { approved, failed, approvable };
+  });
 
-    await prisma.goalSheet.update({
-      where: { id: goalSheetId },
-      data: {
-        status: "APPROVED",
-        isLocked: true,
-        lockedAt: new Date(),
-        lockedBy: session.user.id,
-        approvedAt: new Date(),
-        managerNote: managerNote ?? sheet.managerNote,
-        reviewedAt: sheet.reviewedAt ?? new Date(),
-      },
-    });
-
-    await writeAuditLog({
-      action: "APPROVED",
-      entityType: "GoalSheet",
-      entityId: goalSheetId,
-      createdById: session.user.id,
-      affectedUserId: sheet.employeeId,
-      goalSheetId,
-      previousValues: { status: sheet.status, isLocked: sheet.isLocked },
-      newValues: { status: "APPROVED", isLocked: true },
-      metadata: { managerNote, bulk: true },
-      ipAddress: clientIp,
-    });
-
+  for (const sheet of approvable) {
     await createNotification({
       userId: sheet.employeeId,
       type: "GOAL_APPROVED",
       title: "Goals approved",
       message: `Your goal sheet for ${sheet.cycle.name} has been approved.`,
-      link: `/employee/goals/${goalSheetId}`,
+      link: `/employee/goals/${sheet.id}`,
     });
-
-    approved.push(goalSheetId);
   }
 
   return apiSuccess({ approved, failed });

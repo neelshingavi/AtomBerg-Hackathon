@@ -30,8 +30,13 @@ export async function GET(req: NextRequest) {
     select: { id: true, name: true, departmentId: true, managerId: true },
   });
 
+  const employeeIds = employees.map((e) => e.id);
+
   const sheets = await prisma.goalSheet.findMany({
-    where: { cycleId },
+    where: {
+      cycleId,
+      employeeId: { in: employeeIds },
+    },
     include: {
       goals: { include: { achievements: true } },
       checkinComments: true,

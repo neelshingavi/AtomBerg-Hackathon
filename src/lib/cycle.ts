@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import type { CyclePhase, GoalCycle } from "@prisma/client";
 
 /** True only during the configured goal-setting date range. */
@@ -95,14 +96,21 @@ export function getPhaseLabel(phase: CyclePhase): string {
   return labels[phase];
 }
 
-export async function getActiveCycle() {
-  const { prisma } = await import("@/lib/prisma");
-  const config = await prisma.systemConfig.findUnique({
-    where: { key: "active_cycle_id" },
-  });
-  if (config?.value) {
-    const cycle = await prisma.goalCycle.findUnique({ where: { id: config.value } });
-    if (cycle) return cycle;
-  }
-  return prisma.goalCycle.findFirst({ where: { isActive: true }, orderBy: { createdAt: "desc" } });
-}
+export const getActiveCycle = unstable_cache(
+  async () => {
+    const { prisma } = await import("@/lib/prisma");
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: "active_cycle_id" },
+    });
+    if (config?.value) {
+      const cycle = await prisma.goalCycle.findUnique({ where: { id: config.value } });
+      if (cycle) return cycle;
+    }
+    return prisma.goalCycle.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+  ["active-cycle"],
+  { revalidate: 60 }
+);

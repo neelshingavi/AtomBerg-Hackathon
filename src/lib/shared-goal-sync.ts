@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { CheckinStatus } from "@prisma/client";
 
+type SyncDb = Pick<typeof prisma, "goal" | "achievement">;
+
 export interface AchievementSyncData {
   cycleId: string;
   actualValue?: number | null;
@@ -10,78 +12,78 @@ export interface AchievementSyncData {
   remark?: string | null;
 }
 
-/** Primary owner = earliest-created linked goal's employee (first assignee). */
+export type SyncableGoal = {
+  id: string;
+  isShared: boolean;
+  sharedGoalId: string | null;
+};
+
+/** Primary owner = earliest-created linked goal (first assignee). */
 export async function isPrimarySharedGoalOwner(goalId: string): Promise<boolean> {
   const goal = await prisma.goal.findUnique({
     where: { id: goalId },
-    include: {
-      goalSheet: { select: { employeeId: true } },
-      sharedGoal: {
-        include: {
-          goals: {
-            include: { goalSheet: { select: { employeeId: true, createdAt: true } } },
-            orderBy: { createdAt: "asc" },
-          },
-        },
-      },
-    },
+    select: { id: true, isShared: true, sharedGoalId: true },
   });
 
-  if (!goal?.isShared || !goal.sharedGoal) return true;
+  if (!goal?.isShared || !goal.sharedGoalId) return true;
 
-  const primary = goal.sharedGoal.goals[0]?.goalSheet.employeeId;
-  return goal.goalSheet.employeeId === primary;
+  const linkedGoals = await prisma.goal.findMany({
+    where: { sharedGoalId: goal.sharedGoalId },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return linkedGoals[0]?.id === goal.id;
 }
 
 export async function syncSharedGoalAchievement(
-  goalId: string,
+  goal: SyncableGoal,
   quarter: string,
   data: AchievementSyncData,
-  sourceEmployeeName: string
+  sourceEmployeeName: string,
+  db: SyncDb = prisma
 ) {
-  const goal = await prisma.goal.findUnique({
-    where: { id: goalId },
-    select: { isShared: true, sharedGoalId: true },
-  });
+  if (!goal.isShared || !goal.sharedGoalId) return;
 
-  if (!goal?.isShared || !goal.sharedGoalId) return;
-
-  const isPrimary = await isPrimarySharedGoalOwner(goalId);
-  if (!isPrimary) return;
-
-  const linkedGoals = await prisma.goal.findMany({
-    where: {
-      sharedGoalId: goal.sharedGoalId,
-      id: { not: goalId },
-    },
+  const linkedGoals = await db.goal.findMany({
+    where: { sharedGoalId: goal.sharedGoalId },
     select: { id: true },
+    orderBy: { createdAt: "asc" },
   });
 
-  for (const linked of linkedGoals) {
-    const remarkPrefix = `[Synced from ${sourceEmployeeName}]`;
-    const remark = data.remark
-      ? `${remarkPrefix} ${data.remark}`
-      : remarkPrefix;
+  if (linkedGoals[0]?.id !== goal.id) return;
 
-    await prisma.achievement.upsert({
-      where: { goalId_quarter: { goalId: linked.id, quarter } },
-      update: {
-        actualValue: data.actualValue,
-        completionDate: data.completionDate,
-        status: data.status,
-        progressScore: data.progressScore,
-        remark,
-      },
-      create: {
-        goalId: linked.id,
-        quarter,
-        cycleId: data.cycleId,
-        actualValue: data.actualValue,
-        completionDate: data.completionDate,
-        status: data.status,
-        progressScore: data.progressScore,
-        remark,
-      },
-    });
-  }
+  const linkedGoalIds = linkedGoals
+    .filter((g) => g.id !== goal.id)
+    .map((g) => g.id);
+
+  if (linkedGoalIds.length === 0) return;
+
+  const remarkPrefix = `[Synced from ${sourceEmployeeName}]`;
+  const remark = data.remark ? `${remarkPrefix} ${data.remark}` : remarkPrefix;
+
+  await Promise.all(
+    linkedGoalIds.map((linkedGoalId) =>
+      db.achievement.upsert({
+        where: { goalId_quarter: { goalId: linkedGoalId, quarter } },
+        update: {
+          actualValue: data.actualValue,
+          completionDate: data.completionDate,
+          status: data.status,
+          progressScore: data.progressScore,
+          remark,
+        },
+        create: {
+          goalId: linkedGoalId,
+          quarter,
+          cycleId: data.cycleId,
+          actualValue: data.actualValue,
+          completionDate: data.completionDate,
+          status: data.status,
+          progressScore: data.progressScore,
+          remark,
+        },
+      })
+    )
+  );
 }

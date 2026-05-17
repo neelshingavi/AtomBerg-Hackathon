@@ -16,16 +16,13 @@ import {
   Shield,
   Crown,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { FadeIn, StaggerGrid, StaggerItem } from "@/components/motion";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoRole } from "@/lib/demo/config";
+import { cn } from "@/lib/utils";
 
 const azureEnabled = process.env.NEXT_PUBLIC_AZURE_AD_ENABLED === "true";
 const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal";
@@ -37,11 +34,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ROLE_ICONS: Record<DemoRole, React.ElementType> = {
-  EMPLOYEE: User,
-  MANAGER: Briefcase,
-  ADMIN: Shield,
-  EXECUTIVE: Crown,
+const DEMO_ROLES: DemoRole[] = ["EMPLOYEE", "MANAGER", "ADMIN", "EXECUTIVE"];
+
+const ROLE_META: Record<
+  DemoRole,
+  { icon: React.ElementType; accent: string }
+> = {
+  EMPLOYEE: { icon: User, accent: "hover:border-sky-500/40 hover:bg-sky-500/5" },
+  MANAGER: { icon: Briefcase, accent: "hover:border-violet-500/40 hover:bg-violet-500/5" },
+  ADMIN: { icon: Shield, accent: "hover:border-brand-500/40 hover:bg-brand-500/5" },
+  EXECUTIVE: { icon: Crown, accent: "hover:border-amber-500/40 hover:bg-amber-500/5" },
 };
 
 function LoginForm() {
@@ -81,8 +83,6 @@ function LoginForm() {
 
   async function quickDemo(role: DemoRole) {
     const account = DEMO_ACCOUNTS[role];
-    form.setValue("email", account.email);
-    form.setValue("password", DEMO_PASSWORD);
     setDemoLoading(role);
     try {
       await doSignIn(account.email, DEMO_PASSWORD, account.landingPath);
@@ -92,183 +92,192 @@ function LoginForm() {
   }
 
   return (
-    <FadeIn>
-      <Card className="shine-border border-0 shadow-card-hover backdrop-blur-sm">
-        <CardHeader className="space-y-3 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-cyan-500 shadow-glow">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl font-bold tracking-tight">
-                Organizational Performance OS
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Sign in to {appName} ·{" "}
-                <Link href="/welcome" className="text-brand-600 hover:underline">
-                  Product overview
-                </Link>
-              </CardDescription>
-            </div>
+    <div className="w-full">
+      {/* Card */}
+      <div className="rounded-2xl border border-border/80 bg-card p-8 shadow-xl shadow-slate-900/5">
+        {/* Header — centered, stacked */}
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-cyan-500 shadow-lg shadow-brand-500/25">
+            <Sparkles className="h-6 w-6 text-white" />
           </div>
-          <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wider">
-            Demo-ready · 100+ seeded employees
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              One-click demo access
-            </p>
-            <StaggerGrid className="grid grid-cols-2 gap-2">
-              {(Object.keys(DEMO_ACCOUNTS) as DemoRole[]).map((role) => {
-                const account = DEMO_ACCOUNTS[role];
-                const Icon = ROLE_ICONS[role];
-                return (
-                  <StaggerItem key={role}>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-auto w-full flex-col items-start gap-1 px-3 py-2.5 text-left hover:border-brand-500/40 hover:bg-brand-500/5"
-                      disabled={loading || demoLoading !== null}
-                      onClick={() => void quickDemo(role)}
-                    >
-                      <span className="flex w-full items-center gap-2">
-                        {demoLoading === role ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Icon className="h-4 w-4 text-brand-600" />
-                        )}
-                        <span className="font-medium">{account.label}</span>
-                      </span>
-                      <span className="text-[10px] leading-snug text-muted-foreground line-clamp-2">
-                        {account.description}
-                      </span>
-                    </Button>
-                  </StaggerItem>
-                );
-              })}
-            </StaggerGrid>
-            <p className="mt-2 text-center text-[10px] text-muted-foreground">
-              Password for all demo accounts:{" "}
-              <span className="font-mono font-medium">{DEMO_PASSWORD}</span>
-            </p>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            Sign in to {appName}
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Organizational performance operating system
+          </p>
+          <p className="mt-3 inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Demo-ready · 100+ employees seeded
+          </p>
+        </div>
 
-          <div className="relative">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs font-medium text-muted-foreground">
-              or sign in with email
-            </span>
+        {/* Demo access */}
+        <div className="mt-8">
+          <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            One-click demo
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {DEMO_ROLES.map((role) => {
+              const account = DEMO_ACCOUNTS[role];
+              const { icon: Icon, accent } = ROLE_META[role];
+              const busy = demoLoading === role;
+              return (
+                <button
+                  key={role}
+                  type="button"
+                  disabled={loading || demoLoading !== null}
+                  onClick={() => void quickDemo(role)}
+                  className={cn(
+                    "group flex min-h-[4.25rem] flex-col items-center justify-center gap-1.5 rounded-xl border border-border/80 bg-background px-3 py-3 text-center transition-all",
+                    "disabled:pointer-events-none disabled:opacity-50",
+                    accent
+                  )}
+                >
+                  {busy ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
+                  ) : (
+                    <Icon className="h-5 w-5 text-brand-600 transition-transform group-hover:scale-110" />
+                  )}
+                  <span className="text-sm font-semibold leading-none">{account.label}</span>
+                </button>
+              );
+            })}
           </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            All accounts use password{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-foreground">
+              {DEMO_PASSWORD}
+            </code>
+          </p>
+        </div>
 
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Work email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@company.com"
-                  className="h-10 pl-9"
-                  disabled={loading || demoLoading !== null}
-                  {...form.register("email")}
-                />
-              </div>
-              {form.formState.errors.email && (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-              )}
+        {/* Divider */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <p className="relative mx-auto w-fit bg-card px-3 text-xs font-medium text-muted-foreground">
+            or sign in with email
+          </p>
+        </div>
+
+        {/* Email form */}
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="space-y-2">
+            <Label htmlFor="email">Work email</Label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+                className="h-11 pl-9"
+                disabled={loading || demoLoading !== null}
+                {...form.register("email")}
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="h-10 pl-9"
-                  disabled={loading || demoLoading !== null}
-                  {...form.register("password")}
-                />
-              </div>
-              {form.formState.errors.password && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
-            </div>
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-              >
-                {error}
-              </motion.p>
+            {form.formState.errors.email?.message && (
+              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
             )}
-            <Button
-              type="submit"
-              className="h-10 w-full bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md hover:from-brand-700 hover:to-brand-600"
-              disabled={loading || demoLoading !== null}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in…
-                </>
-              ) : (
-                "Sign in"
-              )}
-            </Button>
-          </form>
+          </div>
 
-          {azureEnabled && (
-            <>
-              <div className="relative">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs font-medium text-muted-foreground">
-                  enterprise SSO
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 w-full gap-2"
-                disabled={loading}
-                onClick={() => signIn("azure-ad", { callbackUrl })}
-              >
-                <svg className="h-4 w-4" viewBox="0 0 21 21" aria-hidden>
-                  <rect x="1" y="1" width="9" height="9" fill="#f25022" />
-                  <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
-                  <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
-                  <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
-                </svg>
-                Microsoft Azure AD
-              </Button>
-            </>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="h-11 pl-9"
+                disabled={loading || demoLoading !== null}
+                {...form.register("password")}
+              />
+            </div>
+            {form.formState.errors.password?.message && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.password.message}
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+            >
+              {error}
+            </motion.p>
           )}
-        </CardContent>
-      </Card>
-    </FadeIn>
+
+          <Button
+            type="submit"
+            className="h-11 w-full gap-2 bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md hover:from-brand-700 hover:to-brand-600"
+            disabled={loading || demoLoading !== null}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Signing in…
+              </>
+            ) : (
+              <>
+                Sign in
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </form>
+
+        {azureEnabled && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <p className="relative mx-auto w-fit bg-card px-3 text-xs font-medium text-muted-foreground">
+                Enterprise SSO
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full gap-2"
+              disabled={loading}
+              onClick={() => signIn("azure-ad", { callbackUrl })}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 21 21" aria-hidden>
+                <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+              </svg>
+              Microsoft Azure AD
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="flex min-h-[320px] items-center justify-center rounded-2xl border bg-card p-8 shadow-lg">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading…
+      </div>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <Card className="p-8 shadow-card">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading…
-          </div>
-        </Card>
-      }
-    >
+    <Suspense fallback={<LoginFallback />}>
       <LoginForm />
     </Suspense>
   );

@@ -74,23 +74,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 60 * 60 * 24 * 7,
   },
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== "credentials") {
         const { prisma } = await import("@/lib/prisma");
         const email = user.email?.toLowerCase().trim();
         if (!email) return false;
+
+        const profileRecord = profile as Record<string, unknown> | undefined;
+        const azureOid =
+          (typeof profileRecord?.oid === "string" ? profileRecord.oid : undefined) ??
+          (typeof profileRecord?.sub === "string" ? profileRecord.sub : undefined) ??
+          account?.providerAccountId ??
+          undefined;
+
+        const lookupOr: Array<
+          | { azureAdId: string }
+          | { email: { equals: string; mode: "insensitive" } }
+        > = [{ email: { equals: email, mode: "insensitive" } }];
+        if (azureOid) {
+          lookupOr.unshift({ azureAdId: azureOid });
+        }
+
         const dbUser = await prisma.user.findFirst({
-          where: {
-            email: { equals: email, mode: "insensitive" },
-            isActive: true,
-          },
+          where: { OR: lookupOr, isActive: true },
         });
         if (!dbUser) return false;
+
+        if (azureOid && dbUser.azureAdId !== azureOid) {
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: { azureAdId: azureOid },
+          });
+        }
       }
       return true;
     },
     async jwt({ token, user, account, trigger }) {
       if (user) {
+        token.lastChecked = Date.now();
+        token.isActive = true;
+
         if (account?.provider === "credentials") {
           token.id = user.id!;
           token.role = user.role as Role;
@@ -100,12 +123,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else {
           const { prisma } = await import("@/lib/prisma");
           const email = user.email?.toLowerCase().trim();
-          if (email) {
+          const azureOid = account?.providerAccountId;
+          const lookupOr: Array<
+            | { azureAdId: string }
+            | { email: { equals: string; mode: "insensitive" } }
+          > = [];
+          if (azureOid) lookupOr.push({ azureAdId: azureOid });
+          if (email) lookupOr.push({ email: { equals: email, mode: "insensitive" } });
+
+          if (lookupOr.length > 0) {
             const dbUser = await prisma.user.findFirst({
-              where: {
-                email: { equals: email, mode: "insensitive" },
-                isActive: true,
-              },
+              where: { OR: lookupOr, isActive: true },
             });
             if (dbUser) {
               token.id = dbUser.id;
@@ -118,17 +146,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      if (trigger === "update" && token.id) {
+      const fiveMinutes = 5 * 60 * 1000;
+      const forceRecheck = trigger === "update";
+      const needsRecheck =
+        forceRecheck ||
+        !token.lastChecked ||
+        Date.now() - (token.lastChecked as number) > fiveMinutes;
+
+      if (needsRecheck && token.id) {
         const { prisma } = await import("@/lib/prisma");
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
+          select: {
+            isActive: true,
+            role: true,
+            departmentId: true,
+            managerId: true,
+            employeeCode: true,
+          },
         });
-        if (dbUser) {
+
+        if (!dbUser?.isActive) {
+          token.isActive = false;
+        } else {
+          token.isActive = true;
           token.role = dbUser.role;
           token.departmentId = dbUser.departmentId;
           token.managerId = dbUser.managerId;
           token.employeeCode = dbUser.employeeCode;
         }
+        token.lastChecked = Date.now();
       }
 
       return token;
@@ -141,6 +188,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.departmentId = token.departmentId as string;
       session.user.managerId = (token.managerId as string | null | undefined) ?? null;
       session.user.employeeCode = token.employeeCode as string;
+      session.user.isActive = token.isActive !== false;
       return session;
     },
   },

@@ -32,7 +32,7 @@ export const patchGoalSchema = z
     title: z.string().min(1).max(500).optional(),
     description: z.string().max(2000).optional().nullable(),
     uomType: uomTypeSchema.optional(),
-    plannedTarget: z.number().optional(),
+    plannedTarget: z.number().min(0, "Target must be non-negative").optional(),
     targetDeadline: z.coerce.date().optional().nullable(),
     unit: z.string().max(100).optional().nullable(),
     weightage: z.number().min(10).max(100).optional(),

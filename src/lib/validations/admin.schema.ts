@@ -17,5 +17,5 @@ export const thrustAreaSchema = z.object({
 });
 
 export const unlockSheetSchema = z.object({
-  reason: z.string().min(1).max(2000),
+  reason: z.string().max(2000).optional(),
 });

@@ -142,7 +142,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     },
   });
 
-  if (sheet.isLocked && isAdmin) {
+  if (isAdmin) {
     const diff = createDiff(previous as Record<string, unknown>, {
       title: updated.title,
       description: updated.description,
@@ -152,17 +152,45 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       unit: updated.unit,
       weightage: updated.weightage,
     });
-    await writeAuditLog({
-      action: "UPDATED",
-      entityType: "Goal",
-      entityId: goalId,
-      createdById: session.user.id,
-      affectedUserId: sheet.employeeId,
-      goalSheetId: sheet.id,
-      previousValues: diff.prev,
-      newValues: diff.next,
-    });
+    if (Object.keys(diff.next).length > 0) {
+      await writeAuditLog({
+        action: "UPDATED",
+        entityType: "Goal",
+        entityId: goalId,
+        createdById: session.user.id,
+        affectedUserId: sheet.employeeId,
+        goalSheetId: sheet.id,
+        previousValues: diff.prev,
+        newValues: diff.next,
+        metadata: { adminOverride: true, sheetLocked: sheet.isLocked },
+      });
+    }
   }
 
   return apiSuccess({ goal: updated });
+}
+
+export async function DELETE(_req: NextRequest, context: RouteContext) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const { goalId: sheetId } = await context.params;
+
+  const sheet = await prisma.goalSheet.findUnique({
+    where: { id: sheetId },
+  });
+
+  if (!sheet) return apiError("Goal sheet not found", 404);
+
+  if (sheet.status !== "DRAFT") {
+    return apiError("Only draft goal sheets can be deleted", 400);
+  }
+
+  if (sheet.employeeId !== session.user.id && session.user.role !== "ADMIN") {
+    return apiError("Forbidden", 403);
+  }
+
+  await prisma.goalSheet.delete({ where: { id: sheetId } });
+
+  return apiSuccess({ deleted: true });
 }

@@ -95,6 +95,7 @@ function SelectContent({
   )
 }
 
+/** Must be rendered inside `<SelectGroup>`. */
 function SelectLabel({
   className,
   ...props

@@ -10,6 +10,54 @@ import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
 
+/** List goals for a sheet (`goalId` = sheet id). */
+export async function GET(_req: NextRequest, context: RouteContext) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const { goalId: sheetId } = await context.params;
+
+  const sheet = await prisma.goalSheet.findUnique({
+    where: { id: sheetId },
+    select: {
+      id: true,
+      employeeId: true,
+      managerId: true,
+      status: true,
+      goals: {
+        orderBy: { order: "asc" },
+        include: {
+          thrustArea: { select: { id: true, name: true, color: true } },
+          achievements: true,
+        },
+      },
+    },
+  });
+
+  if (!sheet) return apiError("Goal sheet not found", 404);
+
+  if (
+    session.user.role === "EMPLOYEE" &&
+    sheet.employeeId !== session.user.id
+  ) {
+    return apiError("Forbidden", 403);
+  }
+  if (
+    session.user.role === "MANAGER" &&
+    sheet.managerId !== session.user.id
+  ) {
+    return apiError("Forbidden", 403);
+  }
+
+  return apiSuccess({
+    goalSheetId: sheet.id,
+    status: sheet.status,
+    goals: sheet.goals,
+    goalsCount: sheet.goals.length,
+    totalWeightage: sheet.goals.reduce((sum, g) => sum + g.weightage, 0),
+  });
+}
+
 /** Add a goal to an existing sheet (`goalId` = sheet id). */
 export async function POST(req: NextRequest, context: RouteContext) {
   const { session, error } = await requireSession();

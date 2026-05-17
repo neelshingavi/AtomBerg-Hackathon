@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import type { AuditAction } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
+import type { AuditAction, Prisma } from "@prisma/client";
+
+type AuditDbClient = Pick<typeof prisma, "auditLog">;
 
 export interface AuditEntry {
   action: AuditAction;
@@ -15,8 +16,8 @@ export interface AuditEntry {
   ipAddress?: string;
 }
 
-export async function writeAuditLog(entry: AuditEntry) {
-  return prisma.auditLog.create({
+export async function writeAuditLog(entry: AuditEntry, db: AuditDbClient = prisma) {
+  return db.auditLog.create({
     data: {
       action: entry.action,
       entityType: entry.entityType,

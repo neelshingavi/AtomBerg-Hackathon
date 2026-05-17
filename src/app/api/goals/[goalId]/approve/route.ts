@@ -7,6 +7,10 @@ import { approveSheetSchema } from "@/lib/validations/goal.schema";
 import { createNotification, goalSheetInclude, serializeGoalSheet } from "@/lib/goals";
 import { sendGoalApprovedEmail } from "@/lib/email/resend";
 import { getRequestIp } from "@/lib/request-ip";
+import { recordFailedEmail } from "@/lib/email-failure";
+import { bumpRealtimeVersion } from "@/lib/realtime/events";
+import { publishOperationalEvent } from "@/lib/realtime/publish";
+import { notifyGoalApprovedTeams } from "@/lib/teams/webhook";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ goalId: string }> };
@@ -132,22 +136,25 @@ export async function POST(req: NextRequest, context: RouteContext) {
       });
 
       if (Object.keys(diff.next).length > 0) {
-        await writeAuditLog({
-          action: "UPDATED",
-          entityType: "Goal",
-          entityId: projected.id,
-          createdById: session.user.id,
-          affectedUserId: sheet.employeeId,
-          goalSheetId,
-          previousValues: diff.prev,
-          newValues: diff.next,
-          metadata: { inlineEdit: true },
-          ipAddress: clientIp,
-        });
+        await writeAuditLog(
+          {
+            action: "UPDATED",
+            entityType: "Goal",
+            entityId: projected.id,
+            createdById: session.user.id,
+            affectedUserId: sheet.employeeId,
+            goalSheetId,
+            previousValues: diff.prev,
+            newValues: diff.next,
+            metadata: { inlineEdit: true },
+            ipAddress: clientIp,
+          },
+          tx
+        );
       }
     }
 
-    return tx.goalSheet.update({
+    const approvedSheet = await tx.goalSheet.update({
       where: { id: goalSheetId },
       data: {
         status: "APPROVED",
@@ -160,19 +167,24 @@ export async function POST(req: NextRequest, context: RouteContext) {
       },
       include: goalSheetInclude,
     });
-  });
 
-  await writeAuditLog({
-    action: "APPROVED",
-    entityType: "GoalSheet",
-    entityId: goalSheetId,
-    createdById: session.user.id,
-    affectedUserId: sheet.employeeId,
-    goalSheetId,
-    previousValues: { status: sheet.status, isLocked: sheet.isLocked },
-    newValues: { status: "APPROVED", isLocked: true },
-    metadata: { managerNote },
-    ipAddress: clientIp,
+    await writeAuditLog(
+      {
+        action: "APPROVED",
+        entityType: "GoalSheet",
+        entityId: goalSheetId,
+        createdById: session.user.id,
+        affectedUserId: sheet.employeeId,
+        goalSheetId,
+        previousValues: { status: sheet.status, isLocked: sheet.isLocked },
+        newValues: { status: "APPROVED", isLocked: true },
+        metadata: { managerNote },
+        ipAddress: clientIp,
+      },
+      tx
+    );
+
+    return approvedSheet;
   });
 
   await createNotification({
@@ -193,17 +205,20 @@ export async function POST(req: NextRequest, context: RouteContext) {
     });
   } catch (e) {
     console.error("[approve] email failed:", e);
+    await recordFailedEmail("GOAL_APPROVED", {
+      to: sheet.employee.email,
+      sheetId: goalSheetId,
+    });
   }
 
-  const { notifyGoalApprovedTeams } = await import("@/lib/teams/webhook");
-  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
   void notifyGoalApprovedTeams(
     sheet.employee.name,
     session.user.name ?? "Manager",
-    goalSheetId
+    goalSheetId,
+    sheet.managerId ?? undefined
   );
+
   await bumpRealtimeVersion("goal_approved");
-  const { publishOperationalEvent } = await import("@/lib/realtime/publish");
   await publishOperationalEvent({
     type: "GOAL_APPROVED",
     title: "Goal sheet approved",

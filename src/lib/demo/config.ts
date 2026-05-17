@@ -150,8 +150,8 @@ export const ONBOARDING_TASKS = [
 ] as const;
 
 export function isDemoModeEnabled(): boolean {
-  return (
-    process.env.NEXT_PUBLIC_DEMO_MODE === "true" ||
-    process.env.NODE_ENV === "development"
-  );
+  if (process.env.NODE_ENV === "production") {
+    return process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  }
+  return process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
 }

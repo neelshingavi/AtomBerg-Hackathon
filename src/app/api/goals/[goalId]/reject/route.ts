@@ -46,31 +46,39 @@ export async function POST(req: NextRequest, context: RouteContext) {
     return apiError(`Cannot reject sheet with status ${sheet.status}`, 400);
   }
 
-  const updated = await prisma.goalSheet.update({
-    where: { id: goalSheetId },
-    data: {
-      status: "REWORK",
-      isLocked: false,
-      lockedAt: null,
-      lockedBy: null,
-      submittedAt: null,
-      rejectedAt: new Date(),
-      managerNote: parsed.data.managerNote,
-    },
-    include: goalSheetInclude,
-  });
+  const clientIp = getRequestIp(req);
 
-  await writeAuditLog({
-    action: "REJECTED",
-    entityType: "GoalSheet",
-    entityId: goalSheetId,
-    createdById: session.user.id,
-    affectedUserId: sheet.employeeId,
-    goalSheetId,
-    previousValues: { status: sheet.status },
-    newValues: { status: "REWORK" },
-    metadata: { managerNote: parsed.data.managerNote },
-    ipAddress: getRequestIp(req),
+  const updated = await prisma.$transaction(async (tx) => {
+    const rejectedSheet = await tx.goalSheet.update({
+      where: { id: goalSheetId },
+      data: {
+        status: "REWORK",
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        rejectedAt: new Date(),
+        managerNote: parsed.data.managerNote,
+      },
+      include: goalSheetInclude,
+    });
+
+    await writeAuditLog(
+      {
+        action: "REJECTED",
+        entityType: "GoalSheet",
+        entityId: goalSheetId,
+        createdById: session.user.id,
+        affectedUserId: sheet.employeeId,
+        goalSheetId,
+        previousValues: { status: sheet.status },
+        newValues: { status: "REWORK" },
+        metadata: { managerNote: parsed.data.managerNote },
+        ipAddress: clientIp,
+      },
+      tx
+    );
+
+    return rejectedSheet;
   });
 
   await createNotification({

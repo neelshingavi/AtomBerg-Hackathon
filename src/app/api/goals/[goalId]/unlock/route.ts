@@ -36,27 +36,34 @@ export async function POST(req: NextRequest, context: RouteContext) {
   if (!sheet) return apiError("Goal sheet not found", 404);
   if (!sheet.isLocked) return apiError("Goal sheet is not locked", 400);
 
-  const updated = await prisma.goalSheet.update({
-    where: { id: goalSheetId },
-    data: {
-      isLocked: false,
-      lockedAt: null,
-      lockedBy: null,
-      status: "REWORK",
-    },
-    include: goalSheetInclude,
-  });
+  const updated = await prisma.$transaction(async (tx) => {
+    const unlockedSheet = await tx.goalSheet.update({
+      where: { id: goalSheetId },
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        status: "REWORK",
+      },
+      include: goalSheetInclude,
+    });
 
-  await writeAuditLog({
-    action: "UNLOCKED",
-    entityType: "GoalSheet",
-    entityId: goalSheetId,
-    createdById: session.user.id,
-    affectedUserId: sheet.employeeId,
-    goalSheetId,
-    previousValues: { isLocked: true, status: sheet.status },
-    newValues: { isLocked: false, status: "REWORK" },
-    metadata: { reason: parsed.data.reason },
+    await writeAuditLog(
+      {
+        action: "UNLOCKED",
+        entityType: "GoalSheet",
+        entityId: goalSheetId,
+        createdById: session.user.id,
+        affectedUserId: sheet.employeeId,
+        goalSheetId,
+        previousValues: { isLocked: true, status: sheet.status },
+        newValues: { isLocked: false, status: "REWORK" },
+        metadata: { reason: parsed.data.reason },
+      },
+      tx
+    );
+
+    return unlockedSheet;
   });
 
   await prisma.notification.create({
@@ -64,7 +71,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
       userId: sheet.employeeId,
       type: "GOAL_UNLOCKED",
       title: "Goals unlocked for editing",
-      message: parsed.data.reason,
+      message:
+        parsed.data.reason ?? "Your goals have been unlocked for editing.",
       link: `/employee/goals/${goalSheetId}`,
     },
   });

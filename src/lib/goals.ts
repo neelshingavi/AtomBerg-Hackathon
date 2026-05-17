@@ -1,4 +1,5 @@
-import type { GoalStatus, Prisma } from "@prisma/client";
+import type { GoalCycle, GoalStatus, Prisma } from "@prisma/client";
+import { getCurrentPhase } from "@/lib/cycle";
 
 export const goalSheetInclude = {
   employee: {
@@ -19,6 +20,14 @@ export const goalSheetInclude = {
       currentPhase: true,
       goalSettingStart: true,
       goalSettingEnd: true,
+      q1WindowStart: true,
+      q1WindowEnd: true,
+      q2WindowStart: true,
+      q2WindowEnd: true,
+      q3WindowStart: true,
+      q3WindowEnd: true,
+      q4WindowStart: true,
+      q4WindowEnd: true,
     },
   },
   goals: {
@@ -34,8 +43,13 @@ export function serializeGoalSheet(
   sheet: Prisma.GoalSheetGetPayload<{ include: typeof goalSheetInclude }>
 ) {
   const totalWeightage = sheet.goals.reduce((sum, g) => sum + g.weightage, 0);
+  const computedPhase = getCurrentPhase(sheet.cycle as GoalCycle);
   return {
     ...sheet,
+    cycle: {
+      ...sheet.cycle,
+      currentPhase: computedPhase,
+    },
     totalWeightage,
     goalsCount: sheet.goals.length,
   };

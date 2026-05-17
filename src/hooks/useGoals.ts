@@ -67,6 +67,8 @@ export function useGoalSheet(sheetId: string | undefined) {
   return useQuery({
     queryKey: ["goalSheet", sheetId],
     enabled: Boolean(sheetId),
+    staleTime: 5_000,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const res = await fetch(`/api/goals/${sheetId}`);
       const data = await parseResponse(res);

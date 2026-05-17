@@ -6,7 +6,7 @@ export const achievementInputSchema = z.object({
   goalId: z.string().min(1),
   quarter: quarterSchema,
   cycleId: z.string().min(1),
-  actualValue: z.number().optional().nullable(),
+  actualValue: z.number().min(0, "Actual value must be non-negative").optional().nullable(),
   completionDate: z.coerce.date().optional().nullable(),
   status: z.enum(["NOT_STARTED", "ON_TRACK", "AT_RISK", "COMPLETED"]),
   remark: z.string().max(2000).optional().nullable(),
@@ -19,7 +19,7 @@ export const achievementBatchSchema = z.object({
   achievements: z.array(
     z.object({
       goalId: z.string().min(1),
-      actualValue: z.number().optional().nullable(),
+      actualValue: z.number().min(0, "Actual value must be non-negative").optional().nullable(),
       completionDate: z.coerce.date().optional().nullable(),
       status: z.enum(["NOT_STARTED", "ON_TRACK", "AT_RISK", "COMPLETED"]),
       remark: z.string().max(2000).optional().nullable(),

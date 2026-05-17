@@ -34,3 +34,22 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
   return apiSuccess({ rule });
 }
+
+export async function DELETE(_req: NextRequest, context: RouteContext) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const roleError = requireRoles(session, ["ADMIN"]);
+  if (roleError) return roleError;
+
+  const { ruleId } = await context.params;
+
+  const existing = await prisma.escalationRule.findUnique({
+    where: { id: ruleId },
+  });
+  if (!existing) return apiError("Rule not found", 404);
+
+  await prisma.escalationRule.delete({ where: { id: ruleId } });
+
+  return apiSuccess({ deleted: true });
+}

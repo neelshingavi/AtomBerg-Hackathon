@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            staleTime: 10_000,
             refetchOnWindowFocus: true,
             retry: 2,
           },
@@ -31,17 +31,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <RealtimeProvider>
               <TooltipProvider>{children}</TooltipProvider>
             </RealtimeProvider>
+            <Toaster
+              richColors
+              position="top-right"
+              toastOptions={{
+                classNames: {
+                  toast: "rounded-xl border shadow-card backdrop-blur-sm",
+                },
+              }}
+            />
           </DemoModeProvider>
         </ThemeProvider>
-        <Toaster
-          richColors
-          position="top-right"
-          toastOptions={{
-            classNames: {
-              toast: "rounded-xl border shadow-card backdrop-blur-sm",
-            },
-          }}
-        />
       </QueryClientProvider>
     </SessionProvider>
   );

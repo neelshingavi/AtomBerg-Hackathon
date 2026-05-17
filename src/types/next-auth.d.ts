@@ -16,6 +16,7 @@ declare module "next-auth" {
       departmentId: string;
       managerId: string | null;
       employeeCode: string;
+      isActive: boolean;
     };
   }
 }
@@ -27,5 +28,7 @@ declare module "next-auth/jwt" {
     departmentId: string;
     managerId: string | null;
     employeeCode: string;
+    isActive?: boolean;
+    lastChecked?: number;
   }
 }

@@ -3,6 +3,8 @@ import { verifyCronRequest } from "@/lib/cron-auth";
 import { createNotification } from "@/lib/goals";
 import { getActiveCycle, getActiveQuarter } from "@/lib/cycle";
 import { sendCheckInReminderEmail } from "@/lib/email/resend";
+import { trackJobRun } from "@/lib/observability/tracker";
+import { bumpRealtimeVersion } from "@/lib/realtime/events";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
@@ -24,15 +26,18 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const sheetsNeedingUpdate = await prisma.goalSheet.findMany({
+  const sheets = await prisma.goalSheet.findMany({
     where: {
       cycleId: activeCycle.id,
       status: "APPROVED",
       isLocked: true,
+    },
+    include: {
+      employee: true,
       goals: {
-        some: {
+        include: {
           achievements: {
-            none: {
+            where: {
               quarter: activeQuarter,
               actualValue: { not: null },
             },
@@ -40,12 +45,14 @@ export async function GET(req: NextRequest) {
         },
       },
     },
-    include: { employee: true },
   });
 
   const reminded: string[] = [];
 
-  for (const sheet of sheetsNeedingUpdate) {
+  for (const sheet of sheets) {
+    const missingCount = sheet.goals.filter((g) => g.achievements.length === 0).length;
+    if (missingCount === 0) continue;
+
     const alreadySent = await prisma.notification.findFirst({
       where: {
         userId: sheet.employeeId,
@@ -72,20 +79,18 @@ export async function GET(req: NextRequest) {
       userId: sheet.employeeId,
       type: "REMINDER",
       title: `${activeQuarter} check-in due`,
-      message: `Please update your achievements for ${activeQuarter}. The window is open now.`,
+      message: `You have ${missingCount} goal(s) still needing ${activeQuarter} updates.`,
       link: `/employee/goals/${sheet.id}/checkin`,
       category: "REMINDER",
       priority: "MEDIUM",
-      metadata: { quarter: activeQuarter, cycleId: activeCycle.id },
+      metadata: { quarter: activeQuarter, cycleId: activeCycle.id, missingCount },
     });
 
     reminded.push(sheet.employeeId);
   }
 
-  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
   if (reminded.length) await bumpRealtimeVersion("checkin_reminder");
 
-  const { trackJobRun } = await import("@/lib/observability/tracker");
   await trackJobRun({
     jobType: "cron:check-reminders",
     status: "success",

@@ -10,6 +10,36 @@ import {
 } from "@/lib/validations/achievement.schema";
 import { syncSharedGoalAchievement } from "@/lib/shared-goal-sync";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+
+type AchievementDb = Pick<typeof prisma, "goal" | "achievement" | "auditLog">;
+
+type AchievementInput = {
+  goalId: string;
+  quarter: "Q1" | "Q2" | "Q3" | "Q4";
+  cycleId: string;
+  actualValue?: number | null;
+  completionDate?: Date | null;
+  status: "NOT_STARTED" | "ON_TRACK" | "AT_RISK" | "COMPLETED";
+  remark?: string | null;
+};
+
+type GoalWithSheet = Prisma.GoalGetPayload<{
+  include: {
+    goalSheet: {
+      include: {
+        cycle: true;
+        employee: { select: { id: true; name: true } };
+      };
+    };
+  };
+}>;
+
+type PreparedAchievement = {
+  goal: GoalWithSheet;
+  data: AchievementInput;
+  progress: ReturnType<typeof calculateProgress>;
+};
 
 export async function GET(req: NextRequest) {
   const { session, error } = await requireSession();
@@ -47,7 +77,6 @@ export async function GET(req: NextRequest) {
   ) {
     return apiError("Forbidden", 403);
   }
-  // ADMIN may view all sheets
 
   return apiSuccess({
     goalSheet: sheet,
@@ -86,9 +115,17 @@ export async function POST(req: NextRequest) {
     return apiError(parsed.error.issues.map((i) => i.message).join("; "));
   }
 
-  const result = await upsertAchievement(session.user.id, parsed.data);
-  if ("error" in result) return result.error;
-  return apiSuccess({ achievement: result.achievement });
+  const prepared = await prepareAchievement(session.user.id, parsed.data);
+  if ("error" in prepared) return prepared.error;
+
+  const result = await prisma.$transaction(async (tx) =>
+    commitAchievementUpsert(tx, session.user.id, prepared)
+  );
+
+  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+  await bumpRealtimeVersion("achievement_logged");
+
+  return apiSuccess({ achievement: result });
 }
 
 async function saveBatch(
@@ -106,31 +143,50 @@ async function saveBatch(
     }>;
   }
 ) {
-  const results = [];
+  const goals = await prisma.goal.findMany({
+    where: { id: { in: data.achievements.map((a) => a.goalId) } },
+    include: {
+      goalSheet: {
+        include: {
+          cycle: true,
+          employee: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  const goalById = new Map(goals.map((g) => [g.id, g]));
+  const prepared: PreparedAchievement[] = [];
+
   for (const item of data.achievements) {
-    const result = await upsertAchievement(userId, {
+    const goal = goalById.get(item.goalId);
+    const validation = validateAchievementInput(userId, goal, {
       ...item,
       quarter: data.quarter,
       cycleId: data.cycleId,
     });
-    if ("error" in result) return result.error;
-    results.push(result.achievement);
+    if ("error" in validation) return validation.error;
+    prepared.push(validation);
   }
+
+  const results = await prisma.$transaction(async (tx) => {
+    const committed = [];
+    for (const entry of prepared) {
+      committed.push(await commitAchievementUpsert(tx, userId, entry));
+    }
+    return committed;
+  });
+
+  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
+  await bumpRealtimeVersion("achievement_logged");
+
   return apiSuccess({ achievements: results });
 }
 
-async function upsertAchievement(
+async function prepareAchievement(
   userId: string,
-  data: {
-    goalId: string;
-    quarter: "Q1" | "Q2" | "Q3" | "Q4";
-    cycleId: string;
-    actualValue?: number | null;
-    completionDate?: Date | null;
-    status: "NOT_STARTED" | "ON_TRACK" | "AT_RISK" | "COMPLETED";
-    remark?: string | null;
-  }
-) {
+  data: AchievementInput
+): Promise<PreparedAchievement | { error: ReturnType<typeof apiError> }> {
   const goal = await prisma.goal.findUnique({
     where: { id: data.goalId },
     include: {
@@ -143,6 +199,14 @@ async function upsertAchievement(
     },
   });
 
+  return validateAchievementInput(userId, goal ?? undefined, data);
+}
+
+function validateAchievementInput(
+  userId: string,
+  goal: GoalWithSheet | undefined,
+  data: AchievementInput
+): PreparedAchievement | { error: ReturnType<typeof apiError> } {
   if (!goal) return { error: apiError("Goal not found", 404) };
 
   if (goal.goalSheet.employeeId !== userId) {
@@ -151,7 +215,10 @@ async function upsertAchievement(
 
   if (!goal.goalSheet.isLocked || goal.goalSheet.status !== "APPROVED") {
     return {
-      error: apiError("Achievements can only be logged after goals are approved and locked", 403),
+      error: apiError(
+        "Achievements can only be logged after goals are approved and locked",
+        403
+      ),
     };
   }
 
@@ -173,7 +240,15 @@ async function upsertAchievement(
     completionDate: data.completionDate,
   });
 
-  const achievement = await prisma.achievement.upsert({
+  return { goal, data, progress };
+}
+
+async function commitAchievementUpsert(
+  tx: AchievementDb,
+  userId: string,
+  { goal, data, progress }: PreparedAchievement
+) {
+  const achievement = await tx.achievement.upsert({
     where: { goalId_quarter: { goalId: data.goalId, quarter: data.quarter } },
     update: {
       actualValue: data.actualValue,
@@ -195,7 +270,7 @@ async function upsertAchievement(
   });
 
   await syncSharedGoalAchievement(
-    data.goalId,
+    goal,
     data.quarter,
     {
       cycleId: data.cycleId,
@@ -205,31 +280,30 @@ async function upsertAchievement(
       progressScore: progress.score,
       remark: data.remark,
     },
-    goal.goalSheet.employee.name
+    goal.goalSheet.employee.name,
+    tx
   );
 
-  await writeAuditLog({
-    action: "ACHIEVEMENT_LOGGED",
-    entityType: "Achievement",
-    entityId: achievement.id,
-    createdById: userId,
-    affectedUserId: userId,
-    goalSheetId: goal.goalSheetId,
-    newValues: {
-      quarter: data.quarter,
-      actualValue: data.actualValue,
-      progressScore: progress.score,
-      status: data.status,
+  await writeAuditLog(
+    {
+      action: "ACHIEVEMENT_LOGGED",
+      entityType: "Achievement",
+      entityId: achievement.id,
+      createdById: userId,
+      affectedUserId: userId,
+      goalSheetId: goal.goalSheetId,
+      newValues: {
+        quarter: data.quarter,
+        actualValue: data.actualValue,
+        progressScore: progress.score,
+        status: data.status,
+      },
     },
-  });
-
-  const { bumpRealtimeVersion } = await import("@/lib/realtime/events");
-  await bumpRealtimeVersion("achievement_logged");
+    tx
+  );
 
   return {
-    achievement: {
-      ...achievement,
-      progress,
-    },
+    ...achievement,
+    progress,
   };
 }

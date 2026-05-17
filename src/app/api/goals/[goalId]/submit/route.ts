@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       },
       data: {
         status: "SUBMITTED",
-        submittedAt: new Date(),
+        submittedAt: sheet.submittedAt ?? new Date(),
         rejectedAt: null,
       },
     });
@@ -77,17 +77,20 @@ export async function POST(req: NextRequest, context: RouteContext) {
       include: goalSheetInclude,
     });
 
-    await writeAuditLog({
-      action: "SUBMITTED",
-      entityType: "GoalSheet",
-      entityId: goalSheetId,
-      createdById: session.user.id,
-      affectedUserId: sheet.employeeId,
-      goalSheetId,
-      previousValues: { status: sheet.status },
-      newValues: { status: "SUBMITTED" },
-      ipAddress: clientIp,
-    });
+    await writeAuditLog(
+      {
+        action: "SUBMITTED",
+        entityType: "GoalSheet",
+        entityId: goalSheetId,
+        createdById: session.user.id,
+        affectedUserId: sheet.employeeId,
+        goalSheetId,
+        previousValues: { status: sheet.status },
+        newValues: { status: "SUBMITTED" },
+        ipAddress: clientIp,
+      },
+      tx
+    );
 
     return result;
   }).catch((e) => {
@@ -121,7 +124,11 @@ export async function POST(req: NextRequest, context: RouteContext) {
       console.error("[submit] email failed:", e);
     }
 
-    void notifyGoalSubmittedTeams(sheet.employee.name, goalSheetId);
+    void notifyGoalSubmittedTeams(
+      sheet.employee.name,
+      goalSheetId,
+      sheet.managerId ?? undefined
+    );
 
     const { runAutomationForTrigger } = await import("@/lib/automation/engine");
     const { bumpRealtimeVersion } = await import("@/lib/realtime/events");

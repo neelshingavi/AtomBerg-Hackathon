@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireSession, requireRoles } from "@/lib/api-auth";
 import { writeAuditLog } from "@/lib/audit";
+import { isQuarterWindowOpen, type Quarter } from "@/lib/cycle";
 import { checkinInputSchema } from "@/lib/validations/achievement.schema";
 import { prisma } from "@/lib/prisma";
 
@@ -77,6 +78,15 @@ export async function POST(req: NextRequest) {
 
   if (sheet.status !== "APPROVED") {
     return apiError("Check-ins are only for approved goal sheets", 400);
+  }
+
+  const cycle = await prisma.goalCycle.findUnique({
+    where: { id: sheet.cycleId },
+  });
+  if (!cycle) return apiError("Cycle not found", 404);
+
+  if (!isQuarterWindowOpen(cycle, quarter as Quarter)) {
+    return apiError(`${quarter} check-in window is not currently open`, 403);
   }
 
   const checkin = await prisma.checkinComment.upsert({

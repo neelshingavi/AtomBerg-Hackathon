@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 const VERSION_KEY = "realtime_version";
+const LAST_EVENT_KEY = "realtime_last_event";
 
 /** Bump global realtime cursor so clients invalidate caches. */
 export async function bumpRealtimeVersion(event?: string) {
@@ -8,22 +9,28 @@ export async function bumpRealtimeVersion(event?: string) {
     where: { key: VERSION_KEY },
   });
   const next = String(Number(existing?.value ?? "0") + 1);
-  await prisma.systemConfig.upsert({
-    where: { key: VERSION_KEY },
-    create: {
-      key: VERSION_KEY,
-      value: next,
-      description: "Realtime invalidation cursor",
-    },
-    update: { value: next },
-  });
-  if (event) {
-    await prisma.systemConfig.upsert({
-      where: { key: "realtime_last_event" },
-      create: { key: "realtime_last_event", value: event },
-      update: { value: event },
-    });
-  }
+
+  await prisma.$transaction([
+    prisma.systemConfig.upsert({
+      where: { key: VERSION_KEY },
+      create: {
+        key: VERSION_KEY,
+        value: next,
+        description: "Realtime invalidation cursor",
+      },
+      update: { value: next },
+    }),
+    ...(event
+      ? [
+          prisma.systemConfig.upsert({
+            where: { key: LAST_EVENT_KEY },
+            create: { key: LAST_EVENT_KEY, value: event },
+            update: { value: event },
+          }),
+        ]
+      : []),
+  ]);
+
   return next;
 }
 

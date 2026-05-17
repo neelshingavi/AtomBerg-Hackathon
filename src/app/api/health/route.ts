@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isCronSecretConfigured } from "@/lib/cron-auth";
 import { prisma } from "@/lib/prisma";
 import { getObservabilitySummary } from "@/lib/observability/tracker";
 
@@ -24,7 +25,8 @@ export async function GET() {
   }
 
   const latencyMs = Date.now() - start;
-  const healthy = dbOk && latencyMs < 3000;
+  const cronSecretConfigured = isCronSecretConfigured();
+  const healthy = dbOk && latencyMs < 3000 && cronSecretConfigured;
 
   return NextResponse.json(
     {
@@ -34,6 +36,7 @@ export async function GET() {
       checks: {
         database: dbOk ? "up" : "down",
         api: "up",
+        cronSecret: cronSecretConfigured ? "configured" : "missing",
       },
       metrics: {
         healthCheckLatencyMs: latencyMs,

@@ -2,7 +2,15 @@ import { prisma } from "@/lib/prisma";
 
 const TEAMS_WEBHOOK_KEY = "teams_webhook_url";
 
-export async function getTeamsWebhookUrl(): Promise<string | null> {
+/** Global webhook by default; optional per-manager override via `teams_webhook_url:{managerId}`. */
+export async function getTeamsWebhookUrl(managerId?: string): Promise<string | null> {
+  if (managerId) {
+    const perManager = await prisma.systemConfig.findUnique({
+      where: { key: `${TEAMS_WEBHOOK_KEY}:${managerId}` },
+    });
+    if (perManager?.value) return perManager.value;
+  }
+
   const row = await prisma.systemConfig.findUnique({
     where: { key: TEAMS_WEBHOOK_KEY },
   });
@@ -76,9 +84,10 @@ const baseUrl = () =>
 
 export async function notifyGoalSubmittedTeams(
   employeeName: string,
-  sheetId: string
+  sheetId: string,
+  managerId?: string
 ) {
-  const webhookUrl = await getTeamsWebhookUrl();
+  const webhookUrl = await getTeamsWebhookUrl(managerId);
   if (!webhookUrl) return;
 
   try {
@@ -97,9 +106,10 @@ export async function notifyGoalSubmittedTeams(
 export async function notifyGoalApprovedTeams(
   employeeName: string,
   managerName: string,
-  sheetId: string
+  sheetId: string,
+  managerId?: string
 ) {
-  const webhookUrl = await getTeamsWebhookUrl();
+  const webhookUrl = await getTeamsWebhookUrl(managerId);
   if (!webhookUrl) return;
   try {
     await sendTeamsNotification(
