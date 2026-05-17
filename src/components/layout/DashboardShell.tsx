@@ -9,6 +9,7 @@ import { DemoModeBar } from "@/components/demo/DemoModeBar";
 import { FeatureSpotlight } from "@/components/demo/FeatureSpotlight";
 import { OnboardingChecklist } from "@/components/demo/OnboardingChecklist";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { AtomCopilot } from "@/components/copilot/AtomCopilot";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <OnboardingChecklist />
         <FeatureSpotlight />
         <CommandPalette />
+        <AtomCopilot />
       </div>
     </div>
   );

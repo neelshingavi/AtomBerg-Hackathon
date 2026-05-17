@@ -95,6 +95,17 @@ npm run demo                  # printed demo script for judges
 
 ---
 
+## Atom AI Intelligence (Phase 6)
+
+- **Atom AI Copilot** — floating assistant with data-driven Q&A (`/api/copilot/chat`)
+- **Organization Pulse** — weighted health score with animated gauge (`/api/intelligence/pulse`)
+- **Live insight carousel** — auto-rotating executive insights with confidence scores
+- **Leadership recommendations** — proactive actions with urgency and explainability
+- **Anomaly detection** — spikes in escalations, risk, and completion trends
+- **What changed engine** — week-over-week organizational deltas
+- **Executive briefings** — auto-generated leadership narratives
+- **Optional OpenAI** — set `OPENAI_API_KEY` for natural language polish (deterministic fallback without it)
+
 ## Enterprise polish (Phase 5)
 
 - **Demo Mode** — Role switcher, onboarding checklist, 6-step feature spotlight tour

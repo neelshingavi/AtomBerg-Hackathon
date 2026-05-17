@@ -14,6 +14,12 @@ import { OperationalCommandCenter } from "./OperationalCommandCenter";
 import { EscalationIntelligence } from "./EscalationIntelligence";
 import type { ExecutiveReport } from "@/lib/reports/executive";
 import { OrgPulseTicker } from "./OrgPulseTicker";
+import { OrganizationPulse } from "@/components/intelligence/OrganizationPulse";
+import { AnomalyAlerts } from "@/components/intelligence/AnomalyAlerts";
+import { InsightCarousel } from "@/components/intelligence/InsightCarousel";
+import { NarrativeBriefing } from "@/components/intelligence/NarrativeBriefing";
+import { LeadershipRecommendations } from "@/components/intelligence/LeadershipRecommendations";
+import { ExecutiveAiSidebar } from "@/components/intelligence/ExecutiveAiSidebar";
 
 const REFETCH_MS = 45_000;
 
@@ -43,12 +49,17 @@ export function ExecutiveDashboard() {
   return (
     <div className="space-y-8">
       <OrgPulseTicker />
+      <AnomalyAlerts />
       <AnalyticsFilters onChange={handleFilters} showDepartment showQuarter />
 
       {isLoading ? (
         <Skeleton className="h-[600px] w-full" />
       ) : data ? (
-        <>
+        <div className="grid gap-8 xl:grid-cols-[1fr_300px]">
+          <div className="space-y-8 min-w-0">
+          <OrganizationPulse />
+          <NarrativeBriefing />
+          <InsightCarousel />
           <section id="overview">
             <FadeIn>
               <ExecutiveKpiRow kpis={data.kpis} />
@@ -96,7 +107,14 @@ export function ExecutiveDashboard() {
               <EscalationIntelligence />
             </FadeInView>
           </section>
-        </>
+          <LeadershipRecommendations />
+          </div>
+          <div className="hidden xl:block">
+            <div className="sticky top-20">
+              <ExecutiveAiSidebar />
+            </div>
+          </div>
+        </div>
       ) : (
         <p className="text-sm text-muted-foreground">Select a cycle to load executive intelligence.</p>
       )}

@@ -601,3 +601,21 @@ model SystemConfig {
 
   @@map("system_config")
 }
+
+model AiIntelligenceLog {
+  id         String   @id @default(cuid())
+  type       String
+  userId     String?
+  cycleId    String?
+  prompt     String?
+  summary    String
+  confidence Float?
+  metadata   Json     @default("{}")
+
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([cycleId])
+  @@index([createdAt])
+  @@map("ai_intelligence_logs")
+}

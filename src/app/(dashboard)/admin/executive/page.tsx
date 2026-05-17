@@ -32,6 +32,7 @@ export default function ExecutivePage() {
 
         <nav className="mb-6 flex gap-2 overflow-x-auto pb-1 text-xs scrollbar-thin">
           {[
+            ["#organization-pulse", "Pulse"],
             ["#overview", "Overview"],
             ["#insights", "AI insights"],
             ["#department-health", "Departments"],
