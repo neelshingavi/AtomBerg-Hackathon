@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ExecutiveDashboard } from "@/components/analytics/ExecutiveDashboard";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { ExecutivePdfExport } from "./ExecutivePdfExport";
 
 export default function ExecutivePage() {
   return (
@@ -11,10 +12,11 @@ export default function ExecutivePage() {
       <Topbar title="Executive intelligence" />
       <PageContainer>
         <PageHeader
-          title="Organizational intelligence"
-          description="Real-time executive view of goal performance, department health, risks, and escalations across Atomberg."
+          title="Organization Health & Execution Insights"
+          description="Strategic alignment, workforce risk, operational bottlenecks, and manager effectiveness — your organizational performance command center."
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              <ExecutivePdfExport />
               <Badge variant="secondary" className="animate-pulse border-emerald-200 bg-emerald-50 text-emerald-700">
                 Live
               </Badge>

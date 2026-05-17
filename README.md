@@ -1,8 +1,25 @@
 # AtomGoal — Goal Setting & Tracking Portal
 
-Production-grade, multi-role web portal for Atomberg Hackathon (**AtomQuest 1.0**). Employees create and submit goal sheets; managers approve and review check-ins; HR/Admin configures cycles, exports reports, and maintains audit trails.
+Production-grade **Organizational Performance Operating System** for Atomberg Hackathon (**AtomQuest 1.0**). Strategic alignment, workforce intelligence, operational visibility, and proactive governance — built for enterprise leaders.
 
-**Full specification:** [`../SOLUTION.md`](../SOLUTION.md) · **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md) · **Phase checklist:** [`PHASES.md`](PHASES.md)
+**Full specification:** [`../SOLUTION.md`](../SOLUTION.md) · **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md) · **In-app architecture:** `/admin/architecture` · **Phase checklist:** [`PHASES.md`](PHASES.md)
+
+### Judge demo (5–7 minutes)
+
+| Step | Action | Highlight |
+|------|--------|-----------|
+| 1 | Login → click **Employee** demo card | One-click role access |
+| 2 | Create/submit goals | Validation + workflow |
+| 3 | **Demo bar** → switch to **Manager** | Instant role switch |
+| 4 | Approve pending goals | Live manager dashboard |
+| 5 | Switch to **Executive** | Organization Health KPIs + live ticker |
+| 6 | Start **Feature tour** | Guided spotlights (risk, alignment, audit) |
+| 7 | `/admin/escalations` | Escalation intelligence |
+| 8 | Export **Board Report (PDF)** | Executive report pack |
+
+**Demo mode:** Set `NEXT_PUBLIC_DEMO_MODE=true` (auto-enabled in development). Password for all accounts: `password123`.
+
+**Health check:** `GET /api/health` · **Docker:** `docker build -t atomgoal .`
 
 ---
 
@@ -77,6 +94,15 @@ npm run demo                  # printed demo script for judges
 ```
 
 ---
+
+## Enterprise polish (Phase 5)
+
+- **Demo Mode** — Role switcher, onboarding checklist, 6-step feature spotlight tour
+- **PDF exports** — Executive summary & escalation reports (`/api/reports/pdf`)
+- **Enterprise XLSX** — Cover sheet, department/manager grouping (`/api/reports/achievement?format=xlsx`)
+- **Architecture showcase** — `/admin/architecture` with Mermaid diagrams
+- **Observability** — Cron, email, API latency + performance panel
+- **Premium login** — One-click demo cards for Employee / Manager / Admin / Executive
 
 ## Demo accounts
 

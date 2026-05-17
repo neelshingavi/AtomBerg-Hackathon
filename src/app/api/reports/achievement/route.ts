@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { apiError } from "@/lib/api-response";
 import { requireSession, requireRoles } from "@/lib/api-auth";
 import { buildAchievementReport } from "@/lib/reports/achievement";
+import { buildEnterpriseWorkbook } from "@/lib/reports/export-enterprise";
 export async function GET(req: NextRequest) {
   const { session, error } = await requireSession();
   if (error) return error;
@@ -49,24 +50,16 @@ export async function GET(req: NextRequest) {
   }
 
   if (format === "xlsx") {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = Array(20).fill({ wch: 14 });
-    XLSX.utils.book_append_sheet(wb, ws, "Achievement Report");
-
-    const summaryData = [
-      ["Report", "Achievement Report"],
-      ["Cycle", cycleName],
-      ["Generated At", new Date().toISOString()],
-      ["Total Employees", new Set(goalSheets.map((s) => s.employeeId)).size],
-      ["Total Goals", rows.length],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), "Summary");
-
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const totalEmployees = new Set(goalSheets.map((s) => s.employeeId)).size;
+    const buffer = buildEnterpriseWorkbook({
+      rows,
+      cycleName,
+      summary: { totalEmployees, totalGoals: rows.length },
+      reportTitle: "Achievement Report",
+    });
     const filename = `achievement-report-${cycleId}-${new Date().toISOString().split("T")[0]}.xlsx`;
 
-    return new NextResponse(buffer, {
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

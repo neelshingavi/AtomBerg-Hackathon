@@ -6,13 +6,18 @@ import { useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
+import { DemoModeProvider } from "@/contexts/DemoModeContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30_000, refetchOnWindowFocus: true },
+          queries: {
+            staleTime: 30_000,
+            refetchOnWindowFocus: true,
+            retry: 2,
+          },
         },
       })
   );
@@ -20,9 +25,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <RealtimeProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </RealtimeProvider>
+        <DemoModeProvider>
+          <RealtimeProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </RealtimeProvider>
+        </DemoModeProvider>
         <Toaster
           richColors
           position="top-right"

@@ -272,7 +272,7 @@ export default function AdminEscalationsPage() {
   return (
     <>
       <Topbar title="Escalations" />
-      <PageContainer className="space-y-8">
+      <PageContainer className="space-y-8" data-spotlight="escalations">
         <EscalationIntelligence />
 
         <Card>

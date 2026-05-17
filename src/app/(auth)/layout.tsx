@@ -21,22 +21,22 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             Atomberg Hackathon
           </p>
           <h1 className="mt-6 max-w-md text-4xl font-bold leading-tight tracking-tight text-white xl:text-5xl">
-            Goals that drive{" "}
+            Your organization&apos;s{" "}
             <span className="bg-gradient-to-r from-brand-400 to-cyan-400 bg-clip-text text-transparent">
-              performance
+              performance operating system
             </span>
           </h1>
           <p className="mt-4 max-w-sm text-base leading-relaxed text-slate-400">
-            Set objectives, track quarterly achievements, and align your team — all in one
-            enterprise-grade portal.
+            Strategic alignment, workforce intelligence, operational visibility, and proactive
+            governance — built for enterprise leaders.
           </p>
         </div>
 
         <div className="relative z-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-8">
           {[
-            { label: "Roles", value: "3" },
-            { label: "Quarters", value: "4" },
-            { label: "Workflow", value: "E2E" },
+            { label: "Employees", value: "100+" },
+            { label: "Insights", value: "AI" },
+            { label: "Enterprise", value: "Ready" },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="text-2xl font-bold text-white">{stat.value}</p>

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
+import { PerformancePanel } from "@/components/performance/PerformancePanel";
 
 type Summary = {
   periodHours: number;
@@ -60,7 +61,9 @@ export default function ObservabilityPage() {
               <StatCard icon={Mail} label="Period" value={`${data?.periodHours ?? 24}h`} />
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <PerformancePanel />
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
               <JobList title="Cron jobs" jobs={data?.recentCronJobs ?? []} />
               <JobList title="Email delivery" jobs={data?.recentEmailJobs ?? []} />
             </div>

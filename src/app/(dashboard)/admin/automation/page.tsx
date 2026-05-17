@@ -155,7 +155,7 @@ export default function AutomationPage() {
   return (
     <>
       <Topbar title="Workflow automation" />
-      <PageContainer>
+      <PageContainer data-spotlight="automation">
         <PageHeader
           title="Automation builder"
           description="Zapier-style rules: triggers, conditions, and multi-channel actions."

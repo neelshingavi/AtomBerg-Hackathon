@@ -40,7 +40,7 @@ export default function AuditLogPageContent() {
   return (
     <>
       <Topbar title="Audit log" />
-      <PageContainer>
+      <PageContainer data-spotlight="audit-log">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Compliance trail</CardTitle>

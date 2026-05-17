@@ -27,6 +27,7 @@ import {
   Bell,
   Zap,
   Gauge,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,7 @@ export function Sidebar({
     { href: "/admin/escalations", label: "Escalations", icon: AlertTriangle },
     { href: "/admin/automation", label: "Automation", icon: Zap },
     { href: "/admin/observability", label: "Observability", icon: Gauge },
+    { href: "/admin/architecture", label: "Architecture", icon: Network },
     { href: "/admin/settings", label: "Integrations", icon: Settings },
     { href: "/admin/audit-log", label: "Audit Log", icon: FileText },
     { href: "/notifications", label: "Inbox", icon: Bell },

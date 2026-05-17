@@ -13,6 +13,7 @@ import { AtRiskPanel } from "./AtRiskPanel";
 import { OperationalCommandCenter } from "./OperationalCommandCenter";
 import { EscalationIntelligence } from "./EscalationIntelligence";
 import type { ExecutiveReport } from "@/lib/reports/executive";
+import { OrgPulseTicker } from "./OrgPulseTicker";
 
 const REFETCH_MS = 45_000;
 
@@ -41,6 +42,7 @@ export function ExecutiveDashboard() {
 
   return (
     <div className="space-y-8">
+      <OrgPulseTicker />
       <AnalyticsFilters onChange={handleFilters} showDepartment showQuarter />
 
       {isLoading ? (

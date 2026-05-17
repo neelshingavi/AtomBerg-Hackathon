@@ -5,6 +5,10 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import { DemoModeBar } from "@/components/demo/DemoModeBar";
+import { FeatureSpotlight } from "@/components/demo/FeatureSpotlight";
+import { OnboardingChecklist } from "@/components/demo/OnboardingChecklist";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +63,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <DemoModeBar />
         <div className="flex items-center gap-3 border-b border-border/80 bg-card/80 px-4 py-3 backdrop-blur-md md:hidden">
           <Button
             variant="ghost"
@@ -76,6 +81,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <ErrorBoundary>
           <main className={cn("flex-1")}>{children}</main>
         </ErrorBoundary>
+        <OnboardingChecklist />
+        <FeatureSpotlight />
+        <CommandPalette />
       </div>
     </div>
   );

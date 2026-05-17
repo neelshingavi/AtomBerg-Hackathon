@@ -8,6 +8,8 @@ import { NotificationBell } from "@/components/layout/NotificationBell";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FadeIn } from "@/components/motion";
+import { RoleSwitcher } from "@/components/demo/RoleSwitcher";
+import { SessionTimeoutIndicator } from "@/components/security/SessionTimeoutIndicator";
 import { cn } from "@/lib/utils";
 
 const phaseColors: Partial<Record<CyclePhase, string>> = {
@@ -35,6 +37,8 @@ export function Topbar({ title }: { title?: string }) {
         )}
       </FadeIn>
       <div className="flex items-center gap-2 sm:gap-3">
+        <SessionTimeoutIndicator className="hidden lg:flex" />
+        <RoleSwitcher className="hidden sm:flex" />
         <GlobalSearch />
         {cycle && phase && (
           <Badge
