@@ -8,8 +8,10 @@ import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { DemoModeBar } from "@/components/demo/DemoModeBar";
 import { FeatureSpotlight } from "@/components/demo/FeatureSpotlight";
 import { OnboardingChecklist } from "@/components/demo/OnboardingChecklist";
-import { CommandPalette } from "@/components/layout/CommandPalette";
 import { AtomCopilot } from "@/components/copilot/AtomCopilot";
+import { DemoResilienceBanner } from "@/components/polish/DemoResilienceBanner";
+import { ClientTelemetry } from "@/components/providers/ClientTelemetry";
+import { ExecutiveLiveTicker } from "@/components/polish/ExecutiveLiveTicker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +20,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh bg-background">
+      <ClientTelemetry />
       <div className="hidden md:flex md:shrink-0">
         <Sidebar />
       </div>
@@ -64,6 +67,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <DemoResilienceBanner />
+        <ExecutiveLiveTicker />
         <DemoModeBar />
         <div className="flex items-center gap-3 border-b border-border/80 bg-card/80 px-4 py-3 backdrop-blur-md md:hidden">
           <Button
@@ -84,7 +89,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
         <OnboardingChecklist />
         <FeatureSpotlight />
-        <CommandPalette />
         <AtomCopilot />
       </div>
     </div>

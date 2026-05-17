@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type AiAuditType =
@@ -26,7 +27,7 @@ export async function logAiGeneration(params: {
         prompt: params.prompt?.slice(0, 2000),
         summary: params.summary.slice(0, 4000),
         confidence: params.confidence,
-        metadata: params.metadata ?? {},
+        metadata: (params.metadata ?? {}) as Prisma.InputJsonValue,
       },
     });
   } catch {

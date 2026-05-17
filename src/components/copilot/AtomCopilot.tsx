@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { sendCopilotMessage } from "@/hooks/useIntelligence";
+import { COPILOT_OPEN_EVENT } from "@/components/layout/CommandPalette";
 import { SUGGESTED_PROMPTS } from "@/lib/ai/query-router";
 import { useCurrentCycle } from "@/hooks/useCurrentCycle";
 import type { CopilotResponse } from "@/lib/intelligence/types";
@@ -42,6 +43,15 @@ export function AtomCopilot() {
   const role = session?.user?.role;
   const show = role === "ADMIN" || role === "MANAGER";
 
+  useEffect(() => {
+    const openCopilot = () => {
+      setOpen(true);
+      setExpanded(true);
+    };
+    window.addEventListener(COPILOT_OPEN_EVENT, openCopilot);
+    return () => window.removeEventListener(COPILOT_OPEN_EVENT, openCopilot);
+  }, []);
+
   const send = useCallback(
     async (text: string) => {
       if (!text.trim() || loading) return;
@@ -50,32 +60,48 @@ export function AtomCopilot() {
         role: "user",
         content: text.trim(),
       };
+      const assistantId = `a-${Date.now()}`;
       setMessages((m) => [...m, userMsg]);
       setInput("");
       setLoading(true);
+      setMessages((m) => [
+        ...m,
+        { id: assistantId, role: "assistant", content: "" },
+      ]);
       try {
-        const { response } = await sendCopilotMessage(text, cycleData?.active?.id);
-        setMessages((m) => [
-          ...m,
-          {
-            id: `a-${Date.now()}`,
-            role: "assistant",
-            content: response.summary,
-            response,
+        const { response } = await sendCopilotMessage(text, cycleData?.active?.id, {
+          stream: true,
+          onToken: (chunk) => {
+            setMessages((m) =>
+              m.map((msg) =>
+                msg.id === assistantId
+                  ? { ...msg, content: msg.content + chunk }
+                  : msg
+              )
+            );
           },
-        ]);
+        });
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === assistantId
+              ? { ...msg, content: response.summary, response }
+              : msg
+          )
+        );
         requestAnimationFrame(() => {
           scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
         });
       } catch {
-        setMessages((m) => [
-          ...m,
-          {
-            id: `e-${Date.now()}`,
-            role: "assistant",
-            content: "Unable to analyze organizational data. Please try again.",
-          },
-        ]);
+        setMessages((m) =>
+          m.map((msg) =>
+            msg.id === assistantId
+              ? {
+                  ...msg,
+                  content: "Unable to analyze organizational data. Please try again.",
+                }
+              : msg
+          )
+        );
       } finally {
         setLoading(false);
       }
@@ -187,10 +213,13 @@ export function AtomCopilot() {
                     </div>
                   ))}
 
-                  {loading && (
+                  {loading &&
+                    !messages.some(
+                      (m) => m.role === "assistant" && m.content.length > 0
+                    ) && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Analyzing organizational data…
+                      <span className="animate-pulse">Analyzing organizational data…</span>
                     </div>
                   )}
                 </div>

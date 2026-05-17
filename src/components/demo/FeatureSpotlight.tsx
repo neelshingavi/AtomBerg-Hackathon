@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDemoModeOptional } from "@/contexts/DemoModeContext";
+import { SPOTLIGHT_STEPS } from "@/lib/demo/config";
 
 export function FeatureSpotlight() {
   const demo = useDemoModeOptional();
@@ -47,7 +48,8 @@ export function FeatureSpotlight() {
 
   if (!demo?.walkthroughActive || !step) return null;
 
-  const progress = `${demo.spotlightIndex + 1} / ${6}`;
+  const total = SPOTLIGHT_STEPS.length;
+  const progress = `${Math.min(demo.spotlightIndex + 1, total)} / ${total}`;
 
   return (
     <AnimatePresence>
@@ -121,7 +123,7 @@ export function FeatureSpotlight() {
                 className="bg-gradient-to-r from-brand-600 to-brand-500 text-white"
                 onClick={() => demo.nextSpotlight()}
               >
-                {demo.spotlightIndex >= 5 ? "Finish" : "Next"}
+                {demo.spotlightIndex >= total - 1 ? "Finish" : "Next"}
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>

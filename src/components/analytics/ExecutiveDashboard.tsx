@@ -92,7 +92,15 @@ export function ExecutiveDashboard() {
 
           <section id="alignment" className="mt-8 grid gap-6 lg:grid-cols-2">
             <FadeInView>
-              <AlignmentTree tree={data.alignmentTree} />
+              <div className="space-y-3">
+                <AlignmentTree tree={data.alignmentTree} />
+                <a
+                  href="/admin/alignment"
+                  className="inline-flex items-center text-sm font-medium text-brand-600 hover:underline"
+                >
+                  Open interactive alignment graph →
+                </a>
+              </div>
             </FadeInView>
             <FadeInView>
               <EscalationIntelligence compact />

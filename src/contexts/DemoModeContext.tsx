@@ -12,7 +12,6 @@ import { usePathname } from "next/navigation";
 import {
   ONBOARDING_TASKS,
   SPOTLIGHT_STEPS,
-  type DemoRole,
   type SpotlightId,
   isDemoModeEnabled,
 } from "@/lib/demo/config";

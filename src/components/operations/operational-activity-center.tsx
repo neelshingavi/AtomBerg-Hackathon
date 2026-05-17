@@ -52,7 +52,7 @@ export function OperationalActivityCenter({ limit = 30 }: { limit?: number }) {
       if (!json.success) throw new Error(json.error);
       return json.data.items as ActivityItem[];
     },
-    refetchInterval: 60_000,
+    refetchInterval: 8_000,
   });
 
   return (

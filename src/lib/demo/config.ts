@@ -33,12 +33,29 @@ export const DEMO_ACCOUNTS: Record<
 };
 
 export type SpotlightId =
+  | "executive-briefing"
+  | "alignment-graph"
+  | "predictive-forecast"
+  | "command-center"
+  | "ai-copilot"
+  | "live-activity"
+  | "collaboration"
   | "executive-dashboard"
-  | "alignment-tree"
-  | "risk-engine"
   | "escalations"
   | "audit-replay"
   | "automation-builder";
+
+/** Recommended judge presentation flow (documented order) */
+export const JUDGE_DEMO_FLOW = [
+  "executive-briefing",
+  "alignment-graph",
+  "predictive-forecast",
+  "command-center",
+  "ai-copilot",
+  "live-activity",
+  "collaboration",
+  "executive-dashboard",
+] as const;
 
 export type SpotlightStep = {
   id: SpotlightId;
@@ -51,58 +68,76 @@ export type SpotlightStep = {
 
 export const SPOTLIGHT_STEPS: SpotlightStep[] = [
   {
-    id: "executive-dashboard",
-    title: "Executive Intelligence",
+    id: "executive-briefing",
+    title: "Executive Briefing Mode",
     description:
-      "Organization health KPIs, workforce risk signals, and execution insights in one command view.",
+      "Cinematic boardroom intelligence — AI narratives, war room, KPI ticker, and presentation-ready leadership storytelling.",
+    route: "/admin/briefing",
+    selector: "[data-briefing-mode]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "alignment-graph",
+    title: "Strategic Alignment Graph",
+    description:
+      "Interactive execution intelligence — dependencies, risk propagation, and war-room visualization.",
+    route: "/admin/alignment",
+    selector: "[data-alignment-graph]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "predictive-forecast",
+    title: "Predictive Risk & Forecasting",
+    description:
+      "Forward-looking execution intelligence — forecast risks, simulate scenarios, intervene before failures.",
+    route: "/admin/forecast",
+    selector: "[data-predictive-dashboard]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "command-center",
+    title: "Operations Command Center",
+    description:
+      "Live mission control — real-time pulse, executive alerts, presence, and incident response mode.",
+    route: "/admin/command-center",
+    selector: "[data-command-center]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "ai-copilot",
+    title: "AI Executive Copilot",
+    description:
+      "Ask natural-language questions about org health, risks, and leadership priorities — context-aware intelligence.",
+    route: "/admin/executive",
+    selector: "[aria-label='Open Atom AI Copilot']",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "live-activity",
+    title: "Real-Time Collaboration",
+    description:
+      "Live organizational activity stream, executive alerts, and operational coordination.",
+    route: "/admin/activity",
+    selector: "[data-live-activity-stream]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "collaboration",
+    title: "Initiative Collaboration Spaces",
+    description:
+      "Cross-functional rooms for strategic initiatives — updates, blockers, and decisions in real time.",
+    route: "/admin/collaboration",
+    selector: "[data-collaboration-spaces]",
+    role: "EXECUTIVE",
+  },
+  {
+    id: "executive-dashboard",
+    title: "Executive Intelligence Dashboard",
+    description:
+      "Organization health KPIs, workforce risk, alignment, and leadership recommendations in one view.",
     route: "/admin/executive",
     selector: "#overview",
     role: "EXECUTIVE",
-  },
-  {
-    id: "alignment-tree",
-    title: "Strategic Alignment",
-    description:
-      "Visualize how departmental goals cascade from thrust areas to individual contributors.",
-    route: "/admin/executive",
-    selector: "#alignment",
-    role: "EXECUTIVE",
-  },
-  {
-    id: "risk-engine",
-    title: "Workforce Risk Engine",
-    description:
-      "Proactive risk scoring identifies at-risk employees and operational bottlenecks before quarter-end.",
-    route: "/admin/executive",
-    selector: "#insights",
-    role: "EXECUTIVE",
-  },
-  {
-    id: "escalations",
-    title: "Escalation Intelligence",
-    description:
-      "Automated escalation rules surface delayed approvals and missed check-ins to leadership.",
-    route: "/admin/escalations",
-    selector: "[data-spotlight='escalations']",
-    role: "ADMIN",
-  },
-  {
-    id: "audit-replay",
-    title: "Audit Replay",
-    description:
-      "Immutable audit trail with entity timelines for compliance and governance reviews.",
-    route: "/admin/audit-log",
-    selector: "[data-spotlight='audit-log']",
-    role: "ADMIN",
-  },
-  {
-    id: "automation-builder",
-    title: "Automation Builder",
-    description:
-      "No-code workflow rules trigger notifications, escalations, and Teams alerts on business events.",
-    route: "/admin/automation",
-    selector: "[data-spotlight='automation']",
-    role: "ADMIN",
   },
 ];
 

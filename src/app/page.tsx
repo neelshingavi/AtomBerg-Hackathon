@@ -10,7 +10,7 @@ const DASHBOARD_BY_ROLE: Record<string, string> = {
 export default async function Home() {
   const session = await auth();
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/welcome");
   }
   redirect(DASHBOARD_BY_ROLE[session.user.role] ?? "/employee");
 }

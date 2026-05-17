@@ -28,6 +28,8 @@ import {
   Zap,
   Gauge,
   Network,
+  Radio,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +76,11 @@ export function Sidebar({
   const adminNav: NavItem[] = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/executive", label: "Executive", icon: Brain },
+    { href: "/admin/briefing", label: "Executive Briefing", icon: Sparkles },
+    { href: "/admin/command-center", label: "Command Center", icon: Radio },
+    { href: "/admin/collaboration", label: "Collaboration", icon: MessageSquare },
+    { href: "/admin/alignment", label: "Alignment Graph", icon: Network },
+    { href: "/admin/forecast", label: "Predictive Forecast", icon: TrendingUp },
     { href: "/admin/shared-goals", label: "Shared Goals", icon: Share2 },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/activity", label: "Activity Center", icon: Activity },

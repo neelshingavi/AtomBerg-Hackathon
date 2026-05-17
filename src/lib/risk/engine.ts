@@ -229,50 +229,56 @@ export async function computeManagerRisks(cycleId: string): Promise<RiskEntity[]
     },
   });
 
-  return managers
-    .map((mgr) => {
-      const factors: RiskEntity["factors"] = [];
-      let score = 0;
+  const results: RiskEntity[] = [];
 
-      const pending = mgr.directReports.flatMap((r) => r.goalSheets).filter((s) => s.status === "SUBMITTED");
-      if (pending.length > 0) {
-        const maxDays = Math.max(
-          ...pending.map((s) => (s.submittedAt ? daysSince(s.submittedAt) : 0))
-        );
-        if (maxDays > 3) {
-          factors.push({
-            factor: "delayed_manager",
-            label: `${pending.length} approvals delayed (max ${maxDays}d)`,
-            weight: FACTOR_WEIGHTS.delayed_manager,
-          });
-          score += FACTOR_WEIGHTS.delayed_manager + Math.min(maxDays, 10);
-        }
-      }
+  for (const mgr of managers) {
+    const factors: RiskEntity["factors"] = [];
+    let score = 0;
 
-      if (mgr.escalationsManager.length > 0) {
+    const pending = mgr.directReports
+      .flatMap((r) => r.goalSheets)
+      .filter((s) => s.status === "SUBMITTED");
+
+    if (pending.length > 0) {
+      const maxDays = Math.max(
+        ...pending.map((s) => (s.submittedAt ? daysSince(s.submittedAt) : 0))
+      );
+      if (maxDays > 3) {
         factors.push({
-          factor: "repeated_escalation",
-          label: `${mgr.escalationsManager.length} unresolved escalations`,
-          weight: FACTOR_WEIGHTS.repeated_escalation,
+          factor: "delayed_manager",
+          label: `${pending.length} approvals delayed (max ${maxDays}d)`,
+          weight: FACTOR_WEIGHTS.delayed_manager,
         });
-        score += FACTOR_WEIGHTS.repeated_escalation;
+        score += FACTOR_WEIGHTS.delayed_manager + Math.min(maxDays, 10);
       }
+    }
 
-      if (!factors.length) return null;
+    if (mgr.escalationsManager.length > 0) {
+      factors.push({
+        factor: "repeated_escalation",
+        label: `${mgr.escalationsManager.length} unresolved escalations`,
+        weight: FACTOR_WEIGHTS.repeated_escalation,
+      });
+      score += FACTOR_WEIGHTS.repeated_escalation;
+    }
 
-      const capped = Math.min(100, score);
-      return {
-        id: mgr.id,
-        name: mgr.name,
-        type: "manager" as const,
-        score: capped,
-        level: scoreToLevel(capped),
-        factors,
-        daysOverdue: pending[0]?.submittedAt ? daysSince(pending[0].submittedAt!) : undefined,
-      };
-    })
-    .filter((r): r is RiskEntity => r !== null)
-    .sort((a, b) => b.score - a.score);
+    if (!factors.length) continue;
+
+    const capped = Math.min(100, score);
+    const firstPending = pending[0];
+    results.push({
+      id: mgr.id,
+      name: mgr.name,
+      type: "manager",
+      score: capped,
+      level: scoreToLevel(capped),
+      factors,
+      daysOverdue:
+        firstPending?.submittedAt != null ? daysSince(firstPending.submittedAt) : undefined,
+    });
+  }
+
+  return results.sort((a, b) => b.score - a.score);
 }
 
 function daysSince(date: Date): number {

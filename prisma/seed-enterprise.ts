@@ -207,5 +207,26 @@ export async function seedEnterpriseData(
     }
   }
 
+  const goals = await prisma.goal.findMany({
+    where: { goalSheet: { cycleId: deps.cycleId } },
+    take: 30,
+    select: { id: true },
+  });
+  for (let i = 0; i < Math.min(20, goals.length - 1); i++) {
+    try {
+      await prisma.goalDependency.create({
+        data: {
+          fromGoalId: goals[i].id,
+          toGoalId: goals[i + 1].id,
+          type: ["DEPENDS_ON", "CONTRIBUTES_TO", "CROSS_TEAM"][i % 3] as "DEPENDS_ON",
+          cycleId: deps.cycleId,
+          isCritical: i % 4 === 0,
+        },
+      });
+    } catch {
+      // unique constraint
+    }
+  }
+
   console.log(`  ✓ ${employees.length} employees, ${sheetCount} goal sheets, escalations seeded`);
 }

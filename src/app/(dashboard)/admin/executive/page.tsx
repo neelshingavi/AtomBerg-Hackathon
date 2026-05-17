@@ -21,6 +21,24 @@ export default function ExecutivePage() {
                 Live
               </Badge>
               <Link
+                href="/admin/briefing"
+                className="text-sm font-semibold text-amber-600 hover:underline"
+              >
+                Executive briefing →
+              </Link>
+              <Link
+                href="/admin/forecast"
+                className="text-sm font-medium text-indigo-600 hover:underline"
+              >
+                Predictive forecast →
+              </Link>
+              <Link
+                href="/admin/alignment"
+                className="text-sm font-medium text-violet-600 hover:underline"
+              >
+                Alignment graph →
+              </Link>
+              <Link
                 href="/admin/analytics"
                 className="text-sm font-medium text-brand-600 hover:underline"
               >
@@ -38,6 +56,7 @@ export default function ExecutivePage() {
             ["#department-health", "Departments"],
             ["#operations", "Operations"],
             ["#alignment", "Alignment"],
+            ["/admin/alignment", "Alignment graph →"],
             ["#escalations", "Escalations"],
           ].map(([href, label]) => (
             <a

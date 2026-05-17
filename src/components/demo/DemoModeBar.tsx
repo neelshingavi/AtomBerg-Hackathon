@@ -3,6 +3,7 @@
 import { Presentation, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { ThemeSwitcher } from "@/components/polish/ThemeSwitcher";
 import { useDemoModeOptional } from "@/contexts/DemoModeContext";
 
 export function DemoModeBar() {
@@ -20,6 +21,7 @@ export function DemoModeBar() {
         </span>
       </div>
       <div className="flex items-center gap-2">
+        <ThemeSwitcher compact />
         <Button
           variant="ghost"
           size="sm"

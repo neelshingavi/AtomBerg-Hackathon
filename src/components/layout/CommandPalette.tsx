@@ -31,9 +31,18 @@ import {
   Shield,
   Activity,
   ClipboardCheck,
+  Sparkles,
+  Radio,
+  MessageSquare,
+  Bot,
+  Zap,
 } from "lucide-react";
 import { fuzzyMatch, fuzzyScore } from "@/lib/fuzzy-match";
+import { matchSemanticRoute } from "@/lib/demo/semantic-routes";
+import { useDemoModeOptional } from "@/contexts/DemoModeContext";
 import { cn } from "@/lib/utils";
+
+export const COPILOT_OPEN_EVENT = "atom-copilot-open";
 
 const RECENT_KEY = "atomgoal-recent-searches";
 
@@ -69,9 +78,17 @@ const NAV_ITEMS: NavItem[] = [
   { id: "mgr-activity", label: "Activity Center", href: "/manager/activity", icon: Activity, roles: ["MANAGER"] },
   { id: "admin-activity", label: "Activity Center", href: "/admin/activity", icon: Activity, roles: ["ADMIN"] },
   { id: "admin-analytics", label: "Executive Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN"] },
+  { id: "admin-briefing", label: "Executive Briefing", href: "/admin/briefing", icon: Sparkles, keywords: "briefing boardroom war room presentation executive narrative", roles: ["ADMIN"] },
+  { id: "admin-command", label: "Command Center", href: "/admin/command-center", icon: Radio, keywords: "live operations command center war room realtime", roles: ["ADMIN"] },
+  { id: "admin-collab", label: "Collaboration Spaces", href: "/admin/collaboration", icon: MessageSquare, keywords: "collaboration initiative rooms discussion", roles: ["ADMIN"] },
+  { id: "admin-alignment", label: "Alignment Graph", href: "/admin/alignment", icon: BarChart3, keywords: "alignment graph strategic dependencies", roles: ["ADMIN"] },
+  { id: "admin-forecast", label: "Predictive Forecast", href: "/admin/forecast", icon: TrendingUp, keywords: "predict forecast risk simulation", roles: ["ADMIN"] },
   { id: "admin-escalations", label: "Escalations", href: "/admin/escalations", icon: AlertTriangle, roles: ["ADMIN"] },
   { id: "admin-cycles", label: "Cycles", href: "/admin/cycles", icon: Calendar, roles: ["ADMIN"] },
   { id: "admin-shared", label: "Push Shared Goals", href: "/admin/shared-goals", icon: Share2, roles: ["ADMIN"] },
+  { id: "admin-executive", label: "Executive Intelligence", href: "/admin/executive", icon: BarChart3, keywords: "executive health", roles: ["ADMIN"] },
+  { id: "admin-observability", label: "Observability", href: "/admin/observability", icon: Activity, roles: ["ADMIN"] },
+  { id: "admin-automation", label: "Automation", href: "/admin/automation", icon: Zap, roles: ["ADMIN"] },
 ];
 
 const QUICK_ACTIONS: Array<{
@@ -89,6 +106,8 @@ const QUICK_ACTIONS: Array<{
   { id: "analytics", label: "Open Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN", "MANAGER"] },
   { id: "create-user", label: "Create User", href: "/admin/users", icon: Users, roles: ["ADMIN"] },
   { id: "create-cycle", label: "Create Cycle", href: "/admin/cycles", icon: Calendar, roles: ["ADMIN"] },
+  { id: "judge-demo", label: "Start judge demo tour", href: "/admin/briefing", icon: Sparkles, roles: ["ADMIN", "MANAGER"] },
+  { id: "open-copilot", label: "Open AI Copilot", href: "#copilot", icon: Bot, roles: ["ADMIN", "MANAGER"] },
 ];
 
 function loadRecent(): SearchResult[] {
@@ -108,6 +127,7 @@ function saveRecent(item: SearchResult) {
 export function CommandPalette({ className }: { className?: string }) {
   const router = useRouter();
   const { data: session } = useSession();
+  const demo = useDemoModeOptional();
   const role = session?.user?.role ?? "EMPLOYEE";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -142,6 +162,19 @@ export function CommandPalette({ className }: { className?: string }) {
 
   const select = useCallback(
     (item: { href: string; id?: string; type?: string; title?: string; subtitle?: string }) => {
+      if (item.id === "open-copilot") {
+        setOpen(false);
+        setQuery("");
+        window.dispatchEvent(new CustomEvent(COPILOT_OPEN_EVENT));
+        return;
+      }
+      if (item.id === "judge-demo") {
+        setOpen(false);
+        setQuery("");
+        demo?.startWalkthrough();
+        router.push("/admin/briefing");
+        return;
+      }
       if (item.id && item.title) {
         saveRecent({
           id: item.id,
@@ -153,9 +186,10 @@ export function CommandPalette({ className }: { className?: string }) {
       }
       setOpen(false);
       setQuery("");
+      if (item.href.startsWith("#")) return;
       router.push(item.href);
     },
-    [router]
+    [router, demo]
   );
 
   const filteredNav = useMemo(() => {
@@ -173,6 +207,9 @@ export function CommandPalette({ className }: { className?: string }) {
   }, [query, role]);
 
   const results = query.length >= 2 ? (data ?? []) : [];
+
+  const semantic =
+    query.length >= 2 ? matchSemanticRoute(query, role as "EMPLOYEE" | "MANAGER" | "ADMIN") : null;
 
   return (
     <>
@@ -223,6 +260,28 @@ export function CommandPalette({ className }: { className?: string }) {
                 </CommandItem>
               ))}
             </CommandGroup>
+          )}
+
+          {semantic && (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading="Smart navigation">
+                <CommandItem
+                  onSelect={() =>
+                    select({
+                      href: semantic.href,
+                      id: semantic.id,
+                      title: semantic.label,
+                      type: "Intent",
+                    })
+                  }
+                  className="gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  <span>{semantic.label}</span>
+                </CommandItem>
+              </CommandGroup>
+            </>
           )}
 
           {filteredActions.length > 0 && (
@@ -280,20 +339,29 @@ export function CommandPalette({ className }: { className?: string }) {
           {results.length > 0 && (
             <>
               <CommandSeparator />
-              <CommandGroup heading="Search results">
-                {results.map((item) => (
-                  <CommandItem key={item.id} onSelect={() => select(item)} className="gap-2">
-                    <Search className="h-4 w-4 shrink-0 opacity-50" />
-                    <span className="text-xs text-muted-foreground w-16 shrink-0">{item.type}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{item.title}</p>
-                      {item.subtitle && (
-                        <p className="truncate text-xs text-muted-foreground">{item.subtitle}</p>
-                      )}
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {Array.from(new Set(results.map((r) => r.type))).map((group) => (
+                <CommandGroup key={group} heading={group}>
+                  {results
+                    .filter((r) => r.type === group)
+                    .map((item) => (
+                      <CommandItem
+                        key={item.id}
+                        onSelect={() => select(item)}
+                        className="gap-2"
+                      >
+                        <Search className="h-4 w-4 shrink-0 opacity-50" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{item.title}</p>
+                          {item.subtitle && (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {item.subtitle}
+                            </p>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              ))}
             </>
           )}
         </CommandList>

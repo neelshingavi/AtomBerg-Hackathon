@@ -114,5 +114,18 @@ export async function createComment(params: {
   });
 
   await bumpRealtimeVersion("comment");
+
+  const { publishOperationalEvent } = await import("@/lib/realtime/publish");
+  await publishOperationalEvent({
+    type: "COMMENT",
+    title: "New collaboration comment",
+    description: `${author.name}: ${params.body.slice(0, 100)}`,
+    severity: "low",
+    actorId: params.authorId,
+    entityType: params.entityType,
+    entityId: params.entityId,
+    href: params.goalSheetId ? `/manager/approvals/${params.goalSheetId}` : undefined,
+  });
+
   return comment;
 }

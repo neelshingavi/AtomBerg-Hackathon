@@ -187,7 +187,7 @@ export default function ArchitecturePage() {
         </FadeIn>
 
         <div className="space-y-8">
-          {DIAGRAMS.map((d, i) => (
+          {DIAGRAMS.map((d) => (
             <FadeInView key={d.id}>
               <Card className="enterprise-card overflow-hidden">
                 <CardHeader>

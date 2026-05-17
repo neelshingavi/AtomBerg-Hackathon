@@ -38,6 +38,12 @@ export function useRealtimePoll(enabled = true) {
       void qc.invalidateQueries({ queryKey: ["goal-sheets"] });
       void qc.invalidateQueries({ queryKey: ["pending-approvals-count"] });
       void qc.invalidateQueries({ queryKey: ["operations"] });
+      void qc.invalidateQueries({ queryKey: ["operations-feed"] });
+      void qc.invalidateQueries({ queryKey: ["live-activity-stream"] });
+      void qc.invalidateQueries({ queryKey: ["command-center-live"] });
+      void qc.invalidateQueries({ queryKey: ["operational-alerts"] });
+      void qc.invalidateQueries({ queryKey: ["collaboration-spaces"] });
+      void qc.invalidateQueries({ queryKey: ["intelligence"] });
 
       if (snap.lastEvent?.includes("notification") && snap.unreadNotifications > (prior.unreadNotifications ?? 0)) {
         toast.info("New notification", { description: snap.lastEvent });

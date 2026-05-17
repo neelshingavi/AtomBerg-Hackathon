@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import { FadeIn, StaggerGrid, StaggerItem } from "@/components/motion";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoRole } from "@/lib/demo/config";
 
@@ -103,7 +104,10 @@ function LoginForm() {
                 Organizational Performance OS
               </CardTitle>
               <CardDescription className="text-sm">
-                Sign in to {appName}
+                Sign in to {appName} ·{" "}
+                <Link href="/welcome" className="text-brand-600 hover:underline">
+                  Product overview
+                </Link>
               </CardDescription>
             </div>
           </div>

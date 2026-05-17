@@ -1,11 +1,13 @@
 import type { IntelligenceSnapshot } from "@/lib/intelligence/snapshot";
 import { kpiMap } from "@/lib/intelligence/snapshot";
 import type { OrganizationPulse } from "@/lib/intelligence/types";
+import type { PredictiveSnapshot } from "@/lib/predictive-engine/types";
 
 export function buildCopilotContext(params: {
   snapshot: IntelligenceSnapshot;
   pulse: OrganizationPulse;
   role: string;
+  predictive?: PredictiveSnapshot;
 }): string {
   const { snapshot, pulse, role } = params;
   const kpis = kpiMap(snapshot);
@@ -55,5 +57,31 @@ MANAGERS:
 ${managers || "No manager risk data"}
 
 ESCALATIONS: ${snapshot.escalations.unresolvedCount} unresolved, SLA compliance ${snapshot.escalations.managerSlaCompliance}%
+${params.predictive ? formatPredictiveBlock(params.predictive) : ""}
 `.trim();
+}
+
+function formatPredictiveBlock(p: PredictiveSnapshot): string {
+  const topRisks = p.predictions
+    .slice(0, 5)
+    .map((r) => `- ${r.title}: ${r.probability}% prob (${r.confidence}% conf) — ${r.projectedImpact}`)
+    .join("\n");
+  const warnings = p.earlyWarnings
+    .slice(0, 4)
+    .map((w) => `- [${w.type}] ${w.title}: ${w.message}`)
+    .join("\n");
+  return `
+
+PREDICTIVE FORECAST (${p.horizon} horizon):
+${p.executiveNarrative}
+Momentum: ${p.momentum.overall}/100 (${p.momentum.trend})
+Stability: ${p.stability.overall}%
+Outlook: ${p.overallRiskOutlook}
+
+TOP PREDICTED RISKS:
+${topRisks || "None"}
+
+EARLY WARNINGS:
+${warnings || "None"}
+`;
 }

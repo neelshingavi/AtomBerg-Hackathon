@@ -114,6 +114,14 @@ enum CommentEntityType {
   ESCALATION
 }
 
+enum GoalDependencyType {
+  BLOCKED_BY
+  CONTRIBUTES_TO
+  DEPENDS_ON
+  STRATEGIC_PARENT
+  CROSS_TEAM
+}
+
 model Department {
   id          String   @id @default(cuid())
   name        String   @unique
@@ -125,6 +133,7 @@ model Department {
 
   users       User[]
   thrustAreas ThrustArea[]
+  sharedGoals SharedGoal[]
 
   @@map("departments")
 }
@@ -204,6 +213,12 @@ model User {
   sharedGoalsPushed   SharedGoal[]     @relation("PushedBy")
   notifications      Notification[]
   discussionComments DiscussionComment[] @relation("CommentAuthor")
+  presence           UserPresence?
+  operationalEvents  OperationalEvent[] @relation("EventActor")
+  ownedSpaces        CollaborationSpace[] @relation("SpaceOwner")
+  spacePosts         CollaborationPost[]
+  spaceMemberships   CollaborationSpaceMember[]
+  acknowledgedAlerts OperationalAlert[] @relation("AlertAcknowledger")
 
   @@index([departmentId])
   @@index([managerId])
@@ -330,9 +345,33 @@ model Goal {
 
   achievements Achievement[]
 
+  dependenciesFrom GoalDependency[] @relation("DependencyFrom")
+  dependenciesTo   GoalDependency[] @relation("DependencyTo")
+
   @@index([goalSheetId])
   @@index([thrustAreaId])
   @@map("goals")
+}
+
+model GoalDependency {
+  id          String             @id @default(cuid())
+  fromGoalId  String
+  fromGoal    Goal               @relation("DependencyFrom", fields: [fromGoalId], references: [id], onDelete: Cascade)
+  toGoalId    String
+  toGoal      Goal               @relation("DependencyTo", fields: [toGoalId], references: [id], onDelete: Cascade)
+  type        GoalDependencyType
+  cycleId     String
+  description String?
+  isCritical  Boolean            @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fromGoalId, toGoalId, type])
+  @@index([cycleId])
+  @@index([fromGoalId])
+  @@index([toGoalId])
+  @@map("goal_dependencies")
 }
 
 model SharedGoal {
@@ -351,8 +390,9 @@ model SharedGoal {
   pushedBy   User   @relation("PushedBy", fields: [pushedById], references: [id])
 
   cycleId      String
-  cycle        GoalCycle @relation(fields: [cycleId], references: [id])
+  cycle        GoalCycle  @relation(fields: [cycleId], references: [id])
   departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
 
   isActive Boolean @default(true)
 
@@ -618,4 +658,147 @@ model AiIntelligenceLog {
   @@index([cycleId])
   @@index([createdAt])
   @@map("ai_intelligence_logs")
+}
+
+enum OperationalEventType {
+  GOAL_SUBMITTED
+  GOAL_APPROVED
+  GOAL_REJECTED
+  ESCALATION
+  CHECKIN
+  COMMENT
+  RISK_ALERT
+  AI_INSIGHT
+  AUTOMATION
+  PULSE_CHANGE
+  INITIATIVE_UPDATE
+  COLLABORATION
+  WORKFLOW
+}
+
+enum OperationalAlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum PresenceStatus {
+  ONLINE
+  AWAY
+  BUSY
+  REVIEWING
+}
+
+enum CollaborationPostType {
+  UPDATE
+  BLOCKER
+  DECISION
+  DISCUSSION
+}
+
+model OperationalEvent {
+  id           String               @id @default(cuid())
+  type         OperationalEventType
+  title        String
+  description  String
+  severity     String               @default("low")
+  actorId      String?
+  actor        User?                @relation("EventActor", fields: [actorId], references: [id])
+  departmentId String?
+  entityType   String?
+  entityId     String?
+  href         String?
+  metadata     Json?
+  cycleId      String?
+  createdAt    DateTime             @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([departmentId])
+  @@map("operational_events")
+}
+
+model OperationalAlert {
+  id                  String                 @id @default(cuid())
+  alertType           String
+  title               String
+  message             String
+  severity            NotificationPriority   @default(MEDIUM)
+  status              OperationalAlertStatus @default(ACTIVE)
+  recommendation      String?
+  affectedDepartments Json?
+  cycleId             String?
+  metadata            Json?
+  acknowledgedById    String?
+  acknowledgedBy      User?                  @relation("AlertAcknowledger", fields: [acknowledgedById], references: [id])
+  acknowledgedAt      DateTime?
+  resolvedAt          DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([status, createdAt])
+  @@index([severity])
+  @@map("operational_alerts")
+}
+
+model UserPresence {
+  userId      String         @id
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      PresenceStatus @default(ONLINE)
+  currentView String?
+  lastSeenAt  DateTime       @default(now())
+  metadata    Json?
+  updatedAt   DateTime       @updatedAt
+
+  @@index([lastSeenAt])
+  @@index([status])
+  @@map("user_presence")
+}
+
+model CollaborationSpace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  ownerId     String
+  owner       User     @relation("SpaceOwner", fields: [ownerId], references: [id])
+  cycleId     String?
+  isActive    Boolean  @default(true)
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts   CollaborationPost[]
+  members CollaborationSpaceMember[]
+
+  @@index([cycleId])
+  @@map("collaboration_spaces")
+}
+
+model CollaborationSpaceMember {
+  spaceId  String
+  space    CollaborationSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     String             @default("member")
+  joinedAt DateTime           @default(now())
+
+  @@id([spaceId, userId])
+  @@map("collaboration_space_members")
+}
+
+model CollaborationPost {
+  id        String                @id @default(cuid())
+  spaceId   String
+  space     CollaborationSpace    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User                  @relation(fields: [authorId], references: [id])
+  body      String
+  postType  CollaborationPostType @default(DISCUSSION)
+  metadata  Json?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@index([spaceId, createdAt])
+  @@map("collaboration_posts")
 }

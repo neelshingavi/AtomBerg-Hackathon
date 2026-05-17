@@ -110,8 +110,53 @@ export function useWhatChanged() {
 
 export async function sendCopilotMessage(
   message: string,
-  cycleId?: string
+  cycleId?: string,
+  options?: { stream?: boolean; onToken?: (chunk: string) => void }
 ): Promise<{ response: CopilotResponse; cycleName: string }> {
+  if (options?.stream) {
+    const res = await fetch("/api/copilot/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, cycleId, stream: true }),
+    });
+    if (!res.ok || !res.body) {
+      return sendCopilotMessage(message, cycleId);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let structured: CopilotResponse | null = null;
+    let buffer = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const payload = line.slice(6).trim();
+        if (payload === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(payload) as {
+            type: string;
+            data?: CopilotResponse | string;
+          };
+          if (parsed.type === "structured" && parsed.data && typeof parsed.data === "object") {
+            structured = parsed.data as CopilotResponse;
+          }
+          if (parsed.type === "token" && typeof parsed.data === "string") {
+            options.onToken?.(parsed.data);
+          }
+        } catch {
+          /* skip malformed chunks */
+        }
+      }
+    }
+    if (structured) {
+      return { response: structured, cycleName: "Active cycle" };
+    }
+  }
+
   const res = await fetch("/api/copilot/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

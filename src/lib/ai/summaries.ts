@@ -1,5 +1,4 @@
 import type { ExecutiveBriefing } from "@/lib/intelligence/types";
-import type { IntelligenceSnapshot } from "@/lib/intelligence/snapshot";
 import { computeOrganizationPulse } from "@/lib/health-engine";
 import { generateLeadershipRecommendations } from "@/lib/recommendations/engine";
 import { detectAnomalies } from "@/lib/anomaly-detection/detector";

@@ -9,6 +9,13 @@ export type QueryIntent =
   | "what_changed"
   | "leadership_attention"
   | "strategic_failures"
+  | "graph_alignment"
+  | "graph_dependencies"
+  | "graph_risk"
+  | "predictive_forecast"
+  | "predictive_intervention"
+  | "predictive_failure"
+  | "executive_briefing"
   | "general";
 
 const PATTERNS: Array<{ intent: QueryIntent; patterns: RegExp[] }> = [
@@ -50,7 +57,68 @@ const PATTERNS: Array<{ intent: QueryIntent; patterns: RegExp[] }> = [
   },
   {
     intent: "strategic_failures",
-    patterns: [/strategic.*fail/i, /initiative.*fail/i, /shared goal/i, /alignment/i],
+    patterns: [/strategic.*fail/i, /initiative.*fail/i, /shared goal/i],
+  },
+  {
+    intent: "graph_alignment",
+    patterns: [
+      /why is .* at risk/i,
+      /which managers affect/i,
+      /alignment graph/i,
+      /organizational alignment/i,
+      /strategic linkage/i,
+    ],
+  },
+  {
+    intent: "graph_dependencies",
+    patterns: [
+      /dependency bottleneck/i,
+      /blocked.*goal/i,
+      /dependency chain/i,
+      /what goals.*block/i,
+      /show dependency/i,
+    ],
+  },
+  {
+    intent: "graph_risk",
+    patterns: [/risk propagat/i, /downstream goal/i, /ripple effect/i, /spreading risk/i],
+  },
+  {
+    intent: "predictive_forecast",
+    patterns: [
+      /predict/i,
+      /forecast/i,
+      /next quarter/i,
+      /next cycle/i,
+      /likely to happen/i,
+      /projection/i,
+      /trajectory/i,
+    ],
+  },
+  {
+    intent: "predictive_failure",
+    patterns: [
+      /likely to fail/i,
+      /what.*fail/i,
+      /emerging risk/i,
+      /proactive intervention/i,
+      /overloaded/i,
+    ],
+  },
+  {
+    intent: "predictive_intervention",
+    patterns: [/intervention/i, /what should we do/i, /how should leadership/i, /prevent/i],
+  },
+  {
+    intent: "executive_briefing",
+    patterns: [
+      /executive briefing/i,
+      /boardroom/i,
+      /leadership narrative/i,
+      /daily briefing/i,
+      /weekly summary/i,
+      /war room/i,
+    ],
   },
 ];
 
@@ -71,4 +139,8 @@ export const SUGGESTED_PROMPTS = [
   "What requires leadership attention?",
   "Show execution bottlenecks",
   "What changed this week?",
+  "Why is Engineering at risk?",
+  "Show dependency bottlenecks",
+  "Which managers affect Revenue Growth?",
+  "Give me the executive briefing for this cycle",
 ];

@@ -53,6 +53,7 @@ export function CommentThread({
       if (!json.success) throw new Error(json.error);
       return json.data.comments as Comment[];
     },
+    refetchInterval: 5_000,
   });
 
   const post = useMutation({

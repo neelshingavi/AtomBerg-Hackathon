@@ -62,6 +62,39 @@
     --space-8: 2rem;
   }
 
+  .theme-executive.dark,
+  .theme-boardroom.dark {
+    --background: 224 50% 4%;
+    --card: 224 42% 7%;
+    --border: 224 28% 14%;
+    --muted-foreground: 215 14% 58%;
+    --brand-glow: 217 91% 62%;
+  }
+
+  .theme-boardroom.dark {
+    --sidebar: 224 55% 5%;
+    --ring: 43 96% 56%;
+  }
+
+  .theme-operational {
+    --background: 210 20% 97%;
+    --accent: 199 89% 94%;
+    --ring: 199 89% 42%;
+  }
+
+  .theme-accessible {
+    --foreground: 0 0% 0%;
+    --muted-foreground: 0 0% 25%;
+    --border: 0 0% 20%;
+    --ring: 221 83% 40%;
+    font-size: 1rem;
+  }
+
+  .theme-accessible *:focus-visible {
+    outline-width: 3px;
+    outline-offset: 3px;
+  }
+
   .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
@@ -189,8 +222,75 @@
     @apply rounded-lg border bg-card shadow-card transition-shadow duration-200 hover:shadow-card-hover;
   }
 
+  .theme-executive .enterprise-card,
+  .theme-boardroom .enterprise-card {
+    @apply shadow-lg shadow-black/20 border-white/5;
+  }
+
+  .executive-glow {
+    box-shadow: 0 0 40px hsl(var(--brand-glow) / 0.15);
+  }
+
+  .chart-enter {
+    animation: chart-fade-in 0.6s ease-out forwards;
+  }
+
   .table-sticky-header thead {
     @apply sticky top-0 z-10 bg-card shadow-sm;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 45s linear infinite;
+}
+
+@keyframes chart-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes alignment-edge-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.alignment-flow .alignment-edge-animated path {
+  stroke-dasharray: 8 6;
+  animation: alignment-edge-flow 1s linear infinite;
+}
+
+.alignment-flow .react-flow__edge.animated path {
+  stroke-dasharray: 6 4;
+  animation: alignment-edge-flow 0.8s linear infinite;
+}
+
+@media print {
+  [data-briefing-mode] {
+    background: white !important;
+    color: #0f172a !important;
+  }
+  [data-briefing-mode] .text-white,
+  [data-briefing-mode] h1,
+  [data-briefing-mode] h2,
+  [data-briefing-mode] h3 {
+    color: #0f172a !important;
   }
 }
 

@@ -6,6 +6,8 @@ import { buildIntelligenceSnapshot } from "@/lib/intelligence/snapshot";
 import { computeOrganizationPulse } from "@/lib/health-engine";
 import { buildCopilotContext } from "@/lib/ai/context-builder";
 import { generateCopilotResponse } from "@/lib/ai/responder";
+import { classifyQuery } from "@/lib/ai/query-router";
+import { buildPredictiveSnapshot } from "@/lib/predictive-engine";
 import { logAiGeneration } from "@/lib/ai/audit";
 import { streamOpenAIText } from "@/lib/ai/openai";
 import { prisma } from "@/lib/prisma";
@@ -34,15 +36,22 @@ export async function POST(req: NextRequest) {
   }
   if (!cycleId) return apiError("cycleId is required");
 
-  const [snapshot, pulse] = await Promise.all([
+  const intent = classifyQuery(parsed.data.message);
+  const needsPredictive =
+    intent.startsWith("predictive_") ||
+    /\b(predict|forecast|likely|proactive|next quarter)\b/i.test(parsed.data.message);
+
+  const [snapshot, pulse, predictive] = await Promise.all([
     buildIntelligenceSnapshot(cycleId),
     computeOrganizationPulse(cycleId),
+    needsPredictive ? buildPredictiveSnapshot(cycleId) : Promise.resolve(undefined),
   ]);
 
   const contextText = buildCopilotContext({
     snapshot,
     pulse,
     role: session.user.role,
+    predictive,
   });
 
   if (parsed.data.stream && process.env.OPENAI_API_KEY) {
@@ -55,6 +64,7 @@ export async function POST(req: NextRequest) {
             snapshot,
             pulse,
             contextText,
+            predictive,
           });
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ type: "structured", data: response })}\n\n`)
@@ -87,6 +97,7 @@ export async function POST(req: NextRequest) {
     snapshot,
     pulse,
     contextText,
+    predictive,
   });
 
   void logAiGeneration({

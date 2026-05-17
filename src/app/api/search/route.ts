@@ -22,7 +22,16 @@ export async function GET(req: NextRequest) {
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER" || isAdmin;
 
-  const [users, departments, thrustAreas, goalSheets, escalationLogs] = await Promise.all([
+  const [
+    users,
+    departments,
+    thrustAreas,
+    goalSheets,
+    goals,
+    escalationLogs,
+    spaces,
+    operationalEvents,
+  ] = await Promise.all([
     isAdmin || isManager
       ? prisma.user.findMany({
           where: { isActive: true },
@@ -63,6 +72,24 @@ export async function GET(req: NextRequest) {
         cycle: { select: { name: true } },
       },
     }),
+    prisma.goal.findMany({
+      where: isAdmin
+        ? {}
+        : isManager
+          ? { goalSheet: { managerId: session.user.id } }
+          : { goalSheet: { employeeId: session.user.id } },
+      take: 30,
+      select: {
+        id: true,
+        title: true,
+        goalSheet: {
+          select: {
+            id: true,
+            employee: { select: { name: true } },
+          },
+        },
+      },
+    }),
     isAdmin
       ? prisma.escalationLog.findMany({
           take: 15,
@@ -72,6 +99,25 @@ export async function GET(req: NextRequest) {
             status: true,
             rule: { select: { trigger: true } },
             employee: { select: { name: true } },
+          },
+        })
+      : Promise.resolve([]),
+    isAdmin
+      ? prisma.collaborationSpace.findMany({
+          take: 12,
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, name: true, description: true },
+        })
+      : Promise.resolve([]),
+    isAdmin
+      ? prisma.operationalEvent.findMany({
+          take: 12,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            description: true,
           },
         })
       : Promise.resolve([]),
@@ -116,9 +162,27 @@ export async function GET(req: NextRequest) {
     if (matches(q, t.name)) {
       results.push({
         id: `thrust-${t.id}`,
-        type: "Thrust Area",
+        type: "Initiative",
         title: t.name,
         href: isAdmin ? "/admin/thrust-areas" : "/employee/goals",
+      });
+    }
+  }
+
+  for (const g of goals) {
+    if (matches(q, g.title, g.goalSheet.employee.name)) {
+      const href =
+        role === "EMPLOYEE"
+          ? `/employee/goals/${g.goalSheet.id}`
+          : isManager
+            ? `/manager/approvals/${g.goalSheet.id}`
+            : "/admin/reports/achievement";
+      results.push({
+        id: `goal-${g.id}`,
+        type: "Goal",
+        title: g.title,
+        subtitle: g.goalSheet.employee.name,
+        href,
       });
     }
   }
@@ -130,7 +194,7 @@ export async function GET(req: NextRequest) {
           ? `/employee/goals/${s.id}`
           : isManager
             ? `/manager/approvals/${s.id}`
-            : `/admin/reports/achievement`;
+            : "/admin/reports/achievement";
       results.push({
         id: `sheet-${s.id}`,
         type: "Goal Sheet",
@@ -154,5 +218,44 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return apiSuccess({ results: results.slice(0, 12) });
+  for (const space of spaces) {
+    if (matches(q, space.name, space.description)) {
+      results.push({
+        id: `space-${space.id}`,
+        type: "Collaboration",
+        title: space.name,
+        subtitle: space.description ?? undefined,
+        href: `/admin/collaboration/${space.id}`,
+      });
+    }
+  }
+
+  for (const ev of operationalEvents) {
+    const label = ev.title ?? ev.type.replace(/_/g, " ");
+    if (matches(q, label, ev.description, ev.type)) {
+      results.push({
+        id: `evt-${ev.id}`,
+        type: "Activity",
+        title: label,
+        subtitle: ev.description ?? undefined,
+        href: "/admin/activity",
+      });
+    }
+  }
+
+  if (isAdmin && matches(q, "risk", "forecast", "predict", "briefing", "insight", "ai")) {
+    const aiRoutes: SearchResult[] = [
+      { id: "ai-briefing", type: "AI Insight", title: "Executive Briefing", href: "/admin/briefing" },
+      { id: "ai-forecast", type: "AI Insight", title: "Predictive Forecast", href: "/admin/forecast" },
+      { id: "ai-align", type: "AI Insight", title: "Alignment Graph", href: "/admin/alignment" },
+      { id: "ai-exec", type: "AI Insight", title: "Executive Intelligence", href: "/admin/executive" },
+    ];
+    for (const r of aiRoutes) {
+      if (matches(q, r.title, "ai insight intelligence")) {
+        results.push(r);
+      }
+    }
+  }
+
+  return apiSuccess({ results: results.slice(0, 16) });
 }

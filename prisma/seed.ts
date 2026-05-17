@@ -554,6 +554,9 @@ async function main() {
   const { seedDefaultAutomationRules } = await import("../src/lib/automation/engine");
   await seedDefaultAutomationRules();
 
+  const { seedGoalDependencies } = await import("./seed-alignment-deps");
+  await seedGoalDependencies(prisma, cycle.id);
+
   console.log("✅ Seed completed!");
   console.log("");
   console.log("📋 Demo Credentials (password: password123)");

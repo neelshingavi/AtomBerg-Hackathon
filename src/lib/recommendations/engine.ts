@@ -71,7 +71,9 @@ export function generateLeadershipRecommendations(
       confidence: 88,
       impact: "high",
       affectedCount: criticalEmployees.length,
-      managers: [...new Set(criticalEmployees.map((e) => e.managerName).filter(Boolean) as string[])].slice(0, 3),
+      managers: Array.from(
+        new Set(criticalEmployees.map((e) => e.managerName).filter(Boolean) as string[])
+      ).slice(0, 3),
       actionLabel: "View at-risk panel",
       href: "/admin/executive#insights",
       factors: ["Critical risk scores", "Missed check-ins", "Low goal progress"],

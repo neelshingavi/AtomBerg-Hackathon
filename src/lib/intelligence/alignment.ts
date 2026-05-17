@@ -150,27 +150,10 @@ function buildDepartmentBranches(
         children: managers.map((m) => teamNode(m, d.users, thrustAreaId, approvedIds)),
       };
     })
-    .filter((n): n is AlignmentNode => n !== null);
+    .filter((n) => n !== null) as AlignmentNode[];
 }
 
-function departmentNode(
-  dept: {
-    id: string;
-    name: string;
-    users: Array<{
-      id: string;
-      name: string;
-      role: string;
-      managerId: string | null;
-      goalSheets: Array<{
-        goals: Array<{
-          achievements: Array<{ progressScore: number | null; quarter: string }>;
-        }>;
-      }>;
-    }>;
-  },
-  approvedIds: Set<string>
-): AlignmentNode {
+function departmentNode(dept: DeptWithUsers, approvedIds: Set<string>): AlignmentNode {
   const managers = dept.users.filter((u) => u.role === "MANAGER");
   const allGoals = dept.users.flatMap((u) => u.goalSheets[0]?.goals ?? []);
   return {

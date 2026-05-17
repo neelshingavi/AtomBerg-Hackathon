@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
 import { RealtimeProvider } from "@/components/providers/RealtimeProvider";
 import { DemoModeProvider } from "@/contexts/DemoModeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -25,11 +26,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
-        <DemoModeProvider>
-          <RealtimeProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-          </RealtimeProvider>
-        </DemoModeProvider>
+        <ThemeProvider>
+          <DemoModeProvider>
+            <RealtimeProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+            </RealtimeProvider>
+          </DemoModeProvider>
+        </ThemeProvider>
         <Toaster
           richColors
           position="top-right"

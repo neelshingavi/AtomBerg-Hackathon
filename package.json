@@ -2,6 +2,9 @@
   "name": "atomquest-portal",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0 <23.0.0"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
@@ -29,12 +32,14 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@base-ui/react": "^1.4.1",
+    "@dagrejs/dagre": "^3.0.0",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "5.22.0",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
     "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-table": "^8.21.3",
+    "@xyflow/react": "^12.10.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -42,6 +47,7 @@
     "date-fns": "^4.1.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.2",
+    "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.16.0",

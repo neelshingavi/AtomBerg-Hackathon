@@ -14,6 +14,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Button } from "@/components/ui/button";
 import { CheckSquare } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { LiveApprovalQueue } from "@/components/realtime/LiveApprovalQueue";
 import { BulkActionBar, BulkActionButton } from "@/components/operations/bulk-action-bar";
 import {
   Dialog,
@@ -146,6 +147,10 @@ export default function ManagerApprovalsPage() {
           title="Approval queue"
           description="Review and approve goal sheets from your direct reports."
         />
+
+        <div className="mb-6 max-w-md">
+          <LiveApprovalQueue />
+        </div>
 
         {selected.length > 0 && (
           <BulkActionBar count={selected.length} className="mb-4">

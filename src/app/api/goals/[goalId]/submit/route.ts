@@ -133,6 +133,18 @@ export async function POST(req: NextRequest, context: RouteContext) {
       entityId: goalSheetId,
     });
     await bumpRealtimeVersion("goal_submitted");
+    const { publishOperationalEvent } = await import("@/lib/realtime/publish");
+    await publishOperationalEvent({
+      type: "GOAL_SUBMITTED",
+      title: "Goal sheet submitted",
+      description: `${sheet.employee.name} · ${sheet.cycle.name}`,
+      severity: "medium",
+      actorId: session.user.id,
+      entityType: "GoalSheet",
+      entityId: goalSheetId,
+      href: `/manager/approvals/${goalSheetId}`,
+      cycleId: sheet.cycleId,
+    });
   }
 
   return apiSuccess({ goalSheet: serializeGoalSheet(updated) });

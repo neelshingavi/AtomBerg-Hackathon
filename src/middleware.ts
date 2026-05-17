@@ -18,18 +18,18 @@ const DASHBOARD_BY_ROLE: Record<string, string> = {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isLogin = pathname === "/login";
+  const isPublic = pathname === "/login" || pathname === "/welcome";
 
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   });
 
-  if (!token && !isLogin) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  if (!token && !isPublic) {
+    return NextResponse.redirect(new URL("/welcome", req.url));
   }
 
-  if (token && isLogin) {
+  if (token && pathname === "/login") {
     const role = (token.role as string) ?? "EMPLOYEE";
     return NextResponse.redirect(new URL(DASHBOARD_BY_ROLE[role] ?? "/employee", req.url));
   }
