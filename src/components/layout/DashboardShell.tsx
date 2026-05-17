@@ -10,6 +10,7 @@ import { FeatureSpotlight } from "@/components/demo/FeatureSpotlight";
 import { OnboardingChecklist } from "@/components/demo/OnboardingChecklist";
 import { AtomCopilot } from "@/components/copilot/AtomCopilot";
 import { DemoResilienceBanner } from "@/components/polish/DemoResilienceBanner";
+import { JudgeFlowGuide } from "@/components/demo/JudgeFlowGuide";
 import { ClientTelemetry } from "@/components/providers/ClientTelemetry";
 import { ExecutiveLiveTicker } from "@/components/polish/ExecutiveLiveTicker";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </Button>
           <span className="text-sm font-semibold text-gradient">
-            {process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal"}
+            {process.env.NEXT_PUBLIC_APP_NAME ?? "AtomQuest"}
           </span>
         </div>
 
@@ -90,6 +91,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <OnboardingChecklist />
         <FeatureSpotlight />
         <AtomCopilot />
+        <JudgeFlowGuide />
       </div>
     </div>
   );

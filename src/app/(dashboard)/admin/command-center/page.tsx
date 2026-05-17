@@ -29,7 +29,7 @@ export default function CommandCenterPage() {
 
   return (
     <>
-      <Topbar title="Operations command center" />
+      <Topbar title="Leadership Response Center" />
       <PageContainer>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -37,7 +37,8 @@ export default function CommandCenterPage() {
               Real-time operations
             </Badge>
             <p className="text-sm text-muted-foreground">
-              Live organizational pulse, executive alerts, presence, and collaboration intelligence.
+              Demo finale war room — live organizational pulse, executive alerts, presence, and
+              real-time workforce coordination. End here with all intelligence layers active.
             </p>
           </div>
           <div className="flex gap-2">

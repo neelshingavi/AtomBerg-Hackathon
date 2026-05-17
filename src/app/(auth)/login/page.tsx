@@ -23,9 +23,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoRole } from "@/lib/demo/config";
 import { cn } from "@/lib/utils";
+import { PRODUCT } from "@/lib/brand";
 
 const azureEnabled = process.env.NEXT_PUBLIC_AZURE_AD_ENABLED === "true";
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal";
+const appName = PRODUCT.name;
 
 const formSchema = z.object({
   email: z.string().email("Enter a valid email"),

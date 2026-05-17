@@ -8,26 +8,27 @@ export const DEMO_ACCOUNTS: Record<
 > = {
   EMPLOYEE: {
     email: "employee@demo.com",
-    label: "Employee",
-    description: "Create goals, log check-ins, track achievements",
+    label: "Workforce",
+    description: "Strategic goals, progress signals, and cross-team initiatives",
     landingPath: "/employee",
   },
   MANAGER: {
     email: "manager@demo.com",
-    label: "Manager",
-    description: "Approve goals, monitor team performance",
+    label: "Leadership",
+    description: "Approval queue, team intelligence, and execution coordination",
     landingPath: "/manager",
   },
   ADMIN: {
     email: "admin@demo.com",
-    label: "Admin",
-    description: "Configure org, cycles, users, automation",
+    label: "Platform Admin",
+    description: "Organizational configuration, governance, and intelligence layers",
     landingPath: "/admin",
   },
   EXECUTIVE: {
     email: "admin@demo.com",
     label: "Executive",
-    description: "Organization health, risk, strategic alignment",
+    description:
+      "Organizational pulse, strategic alignment, predictive execution intelligence",
     landingPath: "/admin/executive",
   },
 };
@@ -45,7 +46,7 @@ export type SpotlightId =
   | "audit-replay"
   | "automation-builder";
 
-/** Recommended judge presentation flow (documented order) */
+/** Cinematic judge presentation flow — problem → platform → live intelligence → decisions → future */
 export const JUDGE_DEMO_FLOW = [
   "executive-briefing",
   "alignment-graph",
@@ -61,6 +62,7 @@ export type SpotlightStep = {
   id: SpotlightId;
   title: string;
   description: string;
+  wowMoment?: string;
   route: string;
   selector: string;
   role: DemoRole;
@@ -69,72 +71,77 @@ export type SpotlightStep = {
 export const SPOTLIGHT_STEPS: SpotlightStep[] = [
   {
     id: "executive-briefing",
-    title: "Executive Briefing Mode",
+    title: "Executive Briefing Center",
+    wowMoment: "AI narrative + war room activation",
     description:
-      "Cinematic boardroom intelligence — AI narratives, war room, KPI ticker, and presentation-ready leadership storytelling.",
+      "Part 2 of the demo arc — cinematic boardroom intelligence, war room mode, and presentation-ready leadership narratives.",
     route: "/admin/briefing",
     selector: "[data-briefing-mode]",
     role: "EXECUTIVE",
   },
   {
     id: "alignment-graph",
-    title: "Strategic Alignment Graph",
+    title: "Strategic Alignment Network",
+    wowMoment: "Dependency graph + risk propagation",
     description:
-      "Interactive execution intelligence — dependencies, risk propagation, and war-room visualization.",
+      "Visualize execution dependencies, risk propagation, and alignment intelligence across initiatives.",
     route: "/admin/alignment",
     selector: "[data-alignment-graph]",
     role: "EXECUTIVE",
   },
   {
     id: "predictive-forecast",
-    title: "Predictive Risk & Forecasting",
+    title: "Execution Forecast Engine",
+    wowMoment: "Scenario simulation + intervention radar",
     description:
-      "Forward-looking execution intelligence — forecast risks, simulate scenarios, intervene before failures.",
+      "Part 3 — forward-looking risk radar, scenario simulation, and proactive intervention recommendations.",
     route: "/admin/forecast",
     selector: "[data-predictive-dashboard]",
     role: "EXECUTIVE",
   },
   {
     id: "command-center",
-    title: "Operations Command Center",
+    title: "Leadership Response Center",
+    wowMoment: "Fullscreen war room — demo finale",
     description:
-      "Live mission control — real-time pulse, executive alerts, presence, and incident response mode.",
+      "Live operational pulse, executive alerts, presence, and incident response — the demo finale war room.",
     route: "/admin/command-center",
     selector: "[data-command-center]",
     role: "EXECUTIVE",
   },
   {
     id: "ai-copilot",
-    title: "AI Executive Copilot",
+    title: "Atom Strategic Advisor",
+    wowMoment: "Structured strategic response with leadership action",
     description:
-      "Ask natural-language questions about org health, risks, and leadership priorities — context-aware intelligence.",
+      "Part 4 — executive decision support with strategic language, risk prioritization, and intervention guidance.",
     route: "/admin/executive",
-    selector: "[aria-label='Open Atom AI Copilot']",
+    selector: "[aria-label^='Open Atom Strategic Advisor']",
     role: "EXECUTIVE",
   },
   {
     id: "live-activity",
-    title: "Real-Time Collaboration",
+    title: "Operational Activity Stream",
     description:
-      "Live organizational activity stream, executive alerts, and operational coordination.",
+      "Real-time organizational activity, escalation propagation, and workforce coordination signals.",
     route: "/admin/activity",
     selector: "[data-live-activity-stream]",
     role: "EXECUTIVE",
   },
   {
     id: "collaboration",
-    title: "Initiative Collaboration Spaces",
+    title: "Workforce Coordination Layer",
     description:
-      "Cross-functional rooms for strategic initiatives — updates, blockers, and decisions in real time.",
+      "Cross-functional initiative rooms — strategic updates, blockers, and leadership decisions in real time.",
     route: "/admin/collaboration",
     selector: "[data-collaboration-spaces]",
     role: "EXECUTIVE",
   },
   {
     id: "executive-dashboard",
-    title: "Executive Intelligence Dashboard",
+    title: "Executive Intelligence Center",
     description:
-      "Organization health KPIs, workforce risk, alignment, and leadership recommendations in one view.",
+      "Organizational pulse, AI strategic insights, and leadership recommendations — unified command view.",
     route: "/admin/executive",
     selector: "#overview",
     role: "EXECUTIVE",
@@ -142,11 +149,19 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
 ];
 
 export const ONBOARDING_TASKS = [
-  { id: "explore-employee", label: "Explore employee dashboard", path: "/employee" },
-  { id: "review-approvals", label: "Review pending approvals", path: "/manager/approvals" },
-  { id: "executive-view", label: "View executive intelligence", path: "/admin/executive" },
-  { id: "check-escalations", label: "Inspect escalation center", path: "/admin/escalations" },
-  { id: "run-spotlight", label: "Complete feature spotlight tour", path: "" },
+  { id: "explore-employee", label: "Explore workforce execution hub", path: "/employee" },
+  { id: "review-approvals", label: "Review leadership approval queue", path: "/manager/approvals" },
+  {
+    id: "executive-view",
+    label: "Open Executive Intelligence Center",
+    path: "/admin/executive",
+  },
+  {
+    id: "check-escalations",
+    label: "Inspect risk & escalation command",
+    path: "/admin/escalations",
+  },
+  { id: "run-spotlight", label: "Complete judge demo spotlight tour", path: "" },
 ] as const;
 
 export function isDemoModeEnabled(): boolean {

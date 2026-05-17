@@ -8,10 +8,10 @@ import Link from "next/link";
 export default function ForecastPage() {
   return (
     <>
-      <Topbar title="Predictive intelligence" />
+      <Topbar title="Execution Forecast Engine" />
       <PageContainer>
         <PageHeader
-          title="Predictive Risk & Execution Forecasting"
+          title="Predictive Execution Intelligence"
           description="Proactive workforce execution intelligence — forecast risks, simulate scenarios, and intervene before failures occur."
           actions={
             <div className="flex flex-wrap items-center gap-2">

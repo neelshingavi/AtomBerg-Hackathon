@@ -104,6 +104,11 @@ export function FeatureSpotlight() {
             </Button>
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+          {step.wowMoment && (
+            <p className="mt-2 text-xs font-medium text-brand-700">
+              Wow moment → {step.wowMoment}
+            </p>
+          )}
           <div className="mt-4 flex items-center justify-between gap-2">
             <Button
               variant="ghost"

@@ -20,11 +20,16 @@ import { InsightCarousel } from "@/components/intelligence/InsightCarousel";
 import { NarrativeBriefing } from "@/components/intelligence/NarrativeBriefing";
 import { LeadershipRecommendations } from "@/components/intelligence/LeadershipRecommendations";
 import { ExecutiveAiSidebar } from "@/components/intelligence/ExecutiveAiSidebar";
+import { ProductMissionBanner } from "@/components/brand/ProductMissionBanner";
+import { TrustSignalsStrip } from "@/components/brand/TrustSignalsStrip";
+import { OperationalDramaBanner } from "@/components/brand/OperationalDramaBanner";
+import { useOrganizationPulse } from "@/hooks/useIntelligence";
 
 const REFETCH_MS = 45_000;
 
 export function ExecutiveDashboard() {
   const [filters, setFilters] = useState<AnalyticsFilterValues>({ cycleId: "" });
+  const { data: pulse } = useOrganizationPulse();
 
   const handleFilters = useCallback((f: AnalyticsFilterValues) => {
     setFilters(f);
@@ -46,8 +51,25 @@ export function ExecutiveDashboard() {
     refetchInterval: REFETCH_MS,
   });
 
+  const isCritical = pulse?.state === "critical" || pulse?.state === "at_risk";
+
   return (
     <div className="space-y-8">
+      <ProductMissionBanner />
+      <TrustSignalsStrip aiConfidence={pulse?.confidence} compact />
+      <OperationalDramaBanner
+        active={!!isCritical}
+        headline={
+          pulse?.state === "critical"
+            ? "Critical organizational pulse — executive intervention required"
+            : "Elevated execution risk detected across the organization"
+        }
+        impact={
+          pulse?.narrative ??
+          "Approval latency and misalignment may compound into quarterly target shortfall."
+        }
+        action="Convene leadership review in Executive Briefing Center and authorize cross-functional intervention"
+      />
       <OrgPulseTicker />
       <AnomalyAlerts />
       <AnalyticsFilters onChange={handleFilters} showDepartment showQuarter />
@@ -98,7 +120,7 @@ export function ExecutiveDashboard() {
                   href="/admin/alignment"
                   className="inline-flex items-center text-sm font-medium text-brand-600 hover:underline"
                 >
-                  Open interactive alignment graph →
+                  Open Strategic Alignment Network →
                 </a>
               </div>
             </FadeInView>
@@ -110,7 +132,7 @@ export function ExecutiveDashboard() {
           <section id="escalations" className="mt-8">
             <FadeInView>
               <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Escalation intelligence
+                Risk & escalation command
               </h3>
               <EscalationIntelligence />
             </FadeInView>

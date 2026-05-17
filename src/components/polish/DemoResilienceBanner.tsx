@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { Radio, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/** Surfaces when React Query has failed queries — demo-safe recovery */
+/** Surfaces when React Query has failed queries — executive-grade recovery */
 export function DemoResilienceBanner() {
   const qc = useQueryClient();
   const [failed, setFailed] = useState(0);
@@ -24,20 +24,22 @@ export function DemoResilienceBanner() {
   return (
     <div
       className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs"
-      role="alert"
+      role="status"
+      aria-live="polite"
     >
       <span className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
-        <AlertCircle className="h-4 w-4" />
-        Some data is temporarily unavailable — demo mode will retry automatically.
+        <Radio className="h-4 w-4 animate-pulse" aria-hidden />
+        Intelligence services reconnecting — operational continuity maintained via demo-safe
+        fallbacks. Auto-retry active.
       </span>
       <Button
         size="sm"
         variant="outline"
-        className="h-7 gap-1"
+        className="h-7 gap-1 shrink-0"
         onClick={() => void qc.invalidateQueries()}
       >
         <RefreshCw className="h-3 w-3" />
-        Refresh all
+        Reconnect all
       </Button>
     </div>
   );

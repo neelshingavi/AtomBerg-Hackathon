@@ -30,7 +30,7 @@ export function buildCopilotContext(params: {
     .join("\n");
 
   return `
-Organization: ${process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal"}
+Organization: ${process.env.NEXT_PUBLIC_APP_NAME ?? "AtomQuest"}
 Cycle: ${snapshot.cycleName} (${snapshot.cycleId})
 User role: ${role}
 Generated: ${snapshot.generatedAt}

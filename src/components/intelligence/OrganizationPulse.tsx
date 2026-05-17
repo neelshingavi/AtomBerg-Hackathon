@@ -4,10 +4,11 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FadeIn } from "@/components/motion";
 import { HealthGauge, PulseIndicator } from "./HealthGauge";
 import { useOrganizationPulse } from "@/hooks/useIntelligence";
+import { IntelligenceLoadingState } from "@/components/polish/IntelligenceLoadingState";
+import { ExecutiveErrorState } from "@/components/polish/ExecutiveErrorState";
 import { cn } from "@/lib/utils";
 import type { HealthState } from "@/lib/intelligence/types";
 
@@ -20,9 +21,20 @@ const STATE_BADGE: Record<HealthState, string> = {
 };
 
 export function OrganizationPulse() {
-  const { data: pulse, isLoading } = useOrganizationPulse();
+  const { data: pulse, isLoading, isError, refetch, isFetching } = useOrganizationPulse();
 
-  if (isLoading) return <Skeleton className="h-64 w-full rounded-2xl" />;
+  if (isLoading && !pulse) {
+    return <IntelligenceLoadingState label="Loading organizational pulse…" />;
+  }
+  if (isError && !pulse) {
+    return (
+      <ExecutiveErrorState
+        compact
+        onRetry={() => void refetch()}
+        message="Organizational pulse temporarily delayed. Reconnecting to intelligence services…"
+      />
+    );
+  }
   if (!pulse) return null;
 
   return (
@@ -36,15 +48,21 @@ export function OrganizationPulse() {
             <div className="flex items-center gap-2">
               <PulseIndicator active />
               <CardTitle className="text-lg font-semibold text-white">
-                Organization Pulse
+                Organizational Pulse
               </CardTitle>
             </div>
-            <Badge className={cn("border", STATE_BADGE[pulse.state])}>
-              {pulse.stateLabel}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {isFetching && (
+                <span className="text-[10px] text-slate-500 animate-pulse">Syncing…</span>
+              )}
+              <Badge className={cn("border", STATE_BADGE[pulse.state])}>
+                {pulse.stateLabel}
+              </Badge>
+            </div>
           </div>
           <p className="text-sm text-slate-400">
-            Live executive health scoring · {pulse.confidence}% confidence
+            Real-time operational intelligence · {pulse.confidence}% forecast confidence ·
+            synced live
           </p>
         </CardHeader>
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[auto_1fr]">

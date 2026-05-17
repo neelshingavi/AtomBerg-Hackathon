@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function ExecutiveBriefingPage() {
   return (
     <>
-      <Topbar title="Executive briefing" />
+      <Topbar title="Executive Briefing Center" />
       <div className="min-h-[calc(100vh-4rem)] bg-slate-950 px-4 py-6 md:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -14,8 +14,8 @@ export default function ExecutiveBriefingPage() {
               Primary demo experience
             </Badge>
             <p className="max-w-xl text-sm text-slate-500">
-              Boardroom intelligence — cinematic executive narratives, war room, and presentation-ready
-              storytelling for leadership.
+              Part 2 of the judge demo arc — cinematic executive narratives, war room mode, and
+              boardroom-ready strategic storytelling. {`Helping organizations predict, align, and execute strategically.`}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">

@@ -110,7 +110,7 @@ export default async function ManagerDashboard() {
 
   return (
     <>
-      <Topbar title="Manager dashboard" />
+      <Topbar title="Team Command View" />
       <PageContainer>
         <ManagerDashboardView
           pendingApprovals={pendingSheets.length}

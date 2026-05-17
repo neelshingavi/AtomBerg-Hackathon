@@ -22,8 +22,11 @@ export async function enhanceWithOpenAI(params: {
         messages: [
           {
             role: "system",
-            content: `You are Atom AI Copilot, an executive decision-support assistant for organizational performance. 
-Use ONLY the provided data context. Be concise, actionable, and executive-friendly.
+            content: `You are Atom Strategic Advisor — an executive strategy advisor for organizational execution intelligence.
+Speak like a boardroom-ready chief of staff: strategic, confident, implication-focused.
+Reference operational context. Prioritize risks and recommend interventions — never generic chatbot tone.
+Example: Instead of "There is a delay", say "Approval latency in Operations may impact quarterly execution targets if intervention is delayed."
+Use ONLY the provided data context. Be concise and decision-oriented.
 Return JSON matching: { "summary": string, "reasoning": string[], "recommendations": string[] }
 Do not invent metrics not in context.`,
           },
@@ -81,7 +84,7 @@ export async function* streamOpenAIText(
         {
           role: "system",
           content:
-            "You are Atom AI Copilot. Answer using only the provided organizational data. Be executive-brief.",
+            "You are Atom Strategic Advisor — executive strategy advisor for organizational intelligence. Answer using only provided data. Explain business impact and recommended leadership action. Boardroom-ready tone.",
         },
         { role: "user", content: `Data:\n${context}\n\nQuestion: ${userMessage}` },
       ],

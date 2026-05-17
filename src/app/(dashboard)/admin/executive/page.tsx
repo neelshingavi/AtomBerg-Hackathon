@@ -5,59 +5,66 @@ import { ExecutiveDashboard } from "@/components/analytics/ExecutiveDashboard";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ExecutivePdfExport } from "./ExecutivePdfExport";
+import { PRODUCT } from "@/lib/brand";
 
 export default function ExecutivePage() {
   return (
     <>
-      <Topbar title="Executive intelligence" />
+      <Topbar title="Executive Intelligence Center" />
       <PageContainer>
         <PageHeader
-          title="Organization Health & Execution Insights"
-          description="Strategic alignment, workforce risk, operational bottlenecks, and manager effectiveness — your organizational performance command center."
+          title="Organizational Pulse & Strategic Execution"
+          description="Operational intelligence for leadership — alignment health, workforce risk, execution bottlenecks, and AI-recommended interventions across the enterprise."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <ExecutivePdfExport />
-              <Badge variant="secondary" className="animate-pulse border-emerald-200 bg-emerald-50 text-emerald-700">
-                Live
+              <Badge
+                variant="secondary"
+                className="animate-pulse border-emerald-200 bg-emerald-50 text-emerald-700"
+              >
+                Live intelligence
               </Badge>
               <Link
                 href="/admin/briefing"
                 className="text-sm font-semibold text-amber-600 hover:underline"
               >
-                Executive briefing →
+                Executive Briefing Center →
               </Link>
               <Link
                 href="/admin/forecast"
                 className="text-sm font-medium text-indigo-600 hover:underline"
               >
-                Predictive forecast →
+                Execution Forecast Engine →
               </Link>
               <Link
                 href="/admin/alignment"
                 className="text-sm font-medium text-violet-600 hover:underline"
               >
-                Alignment graph →
+                Strategic Alignment Network →
               </Link>
               <Link
-                href="/admin/analytics"
-                className="text-sm font-medium text-brand-600 hover:underline"
+                href="/admin/command-center"
+                className="text-sm font-medium text-cyan-600 hover:underline"
               >
-                Detailed analytics →
+                Leadership Response Center →
               </Link>
             </div>
           }
         />
 
-        <nav className="mb-6 flex gap-2 overflow-x-auto pb-1 text-xs scrollbar-thin">
+        <nav
+          className="mb-6 flex gap-2 overflow-x-auto pb-1 text-xs scrollbar-thin"
+          aria-label="Executive intelligence sections"
+        >
           {[
-            ["#organization-pulse", "Pulse"],
-            ["#overview", "Overview"],
-            ["#insights", "AI insights"],
-            ["#department-health", "Departments"],
-            ["#operations", "Operations"],
-            ["#alignment", "Alignment"],
-            ["/admin/alignment", "Alignment graph →"],
-            ["#escalations", "Escalations"],
+            ["#organization-pulse", "Organizational Pulse"],
+            ["#overview", "Execution Overview"],
+            ["#insights", "AI Strategic Insights"],
+            ["#department-health", "Unit Health"],
+            ["#operations", "Operational Intelligence"],
+            ["#alignment", "Alignment Network"],
+            ["/admin/alignment", "Full alignment graph →"],
+            ["#escalations", "Risk Command"],
           ].map(([href, label]) => (
             <a
               key={href}
@@ -68,6 +75,10 @@ export default function ExecutivePage() {
             </a>
           ))}
         </nav>
+
+        <p className="mb-6 text-xs text-muted-foreground">
+          {PRODUCT.mission} · {PRODUCT.category}
+        </p>
 
         <ExecutiveDashboard />
       </PageContainer>

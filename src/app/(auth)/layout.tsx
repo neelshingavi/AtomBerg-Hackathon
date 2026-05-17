@@ -1,13 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Sparkles, Target, Radio, Brain } from "lucide-react";
-
-const appName = process.env.NEXT_PUBLIC_APP_NAME ?? "AtomQuest";
+import { PRODUCT } from "@/lib/brand";
 
 const HIGHLIGHTS = [
-  { icon: Target, label: "Strategic alignment" },
-  { icon: Brain, label: "AI workforce intelligence" },
-  { icon: Radio, label: "Live command center" },
+  { icon: Target, label: "Strategic execution intelligence" },
+  { icon: Brain, label: "Atom Strategic Advisor" },
+  { icon: Radio, label: "Leadership Response Center" },
 ] as const;
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -36,20 +35,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-cyan-500 shadow-lg shadow-brand-500/30">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-semibold text-white">{appName}</span>
+              <span className="text-lg font-semibold text-white">{PRODUCT.name}</span>
             </div>
           </div>
 
           <div className="max-w-lg">
             <h1 className="text-[2.5rem] font-bold leading-[1.1] tracking-tight text-white xl:text-5xl">
-              Your organization&apos;s
-              <span className="mt-1 block bg-gradient-to-r from-brand-300 via-brand-400 to-cyan-400 bg-clip-text text-transparent">
-                performance operating system
-              </span>
+              {PRODUCT.vision}
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-slate-400">
-              Strategic alignment, workforce intelligence, operational visibility, and
-              proactive governance — built for enterprise leaders.
+              {PRODUCT.mission} Predictive coordination, alignment intelligence, and
+              operational visibility — built for the boardroom, not the backlog.
             </p>
 
             <ul className="mt-10 space-y-3">
@@ -70,8 +66,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-white/10 pt-8">
             {[
               { value: "100+", label: "Seeded employees" },
-              { value: "AI", label: "Copilot intelligence" },
-              { value: "Live", label: "Ops command center" },
+              { value: "AI", label: "Strategic advisor" },
+              { value: "Live", label: "Operational intelligence" },
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-xl font-bold tabular-nums text-white">{stat.value}</p>
@@ -88,7 +84,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             href="/welcome"
             className="text-sm font-semibold text-gradient lg:hidden"
           >
-            {appName}
+            {PRODUCT.name}
           </Link>
           <Link
             href="/welcome"
@@ -103,7 +99,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
 
         <footer className="shrink-0 px-6 py-5 text-center text-xs text-muted-foreground sm:px-10">
-          © {new Date().getFullYear()} {appName} · AtomQuest 1.0
+          © {new Date().getFullYear()} {PRODUCT.name} · {PRODUCT.tagline}
         </footer>
       </div>
     </div>

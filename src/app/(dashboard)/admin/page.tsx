@@ -101,7 +101,7 @@ export default async function AdminDashboard() {
 
   return (
     <>
-      <Topbar title="Admin dashboard" />
+      <Topbar title="Command Overview" />
       <PageContainer>
         <AdminDashboardView
           orgCompletionPct={orgCompletionPct}

@@ -41,6 +41,7 @@ import { fuzzyMatch, fuzzyScore } from "@/lib/fuzzy-match";
 import { matchSemanticRoute } from "@/lib/demo/semantic-routes";
 import { useDemoModeOptional } from "@/contexts/DemoModeContext";
 import { cn } from "@/lib/utils";
+import { NAV_LABELS, PRODUCT } from "@/lib/brand";
 
 export const COPILOT_OPEN_EVENT = "atom-copilot-open";
 
@@ -64,29 +65,29 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "emp-dash", label: "Employee Dashboard", href: "/employee", icon: LayoutDashboard, roles: ["EMPLOYEE", "MANAGER", "ADMIN"] },
+  { id: "emp-dash", label: NAV_LABELS.employee.home, href: "/employee", icon: LayoutDashboard, roles: ["EMPLOYEE", "MANAGER", "ADMIN"] },
   { id: "emp-goals", label: "My Goals", href: "/employee/goals", icon: Target, roles: ["EMPLOYEE", "MANAGER", "ADMIN"] },
   { id: "emp-checkins", label: "Check-ins", href: "/employee/checkins", icon: ClipboardCheck, roles: ["EMPLOYEE", "MANAGER", "ADMIN"] },
-  { id: "mgr-dash", label: "Manager Dashboard", href: "/manager", icon: LayoutDashboard, roles: ["MANAGER", "ADMIN"] },
+  { id: "mgr-dash", label: NAV_LABELS.manager.home, href: "/manager", icon: LayoutDashboard, roles: ["MANAGER", "ADMIN"] },
   { id: "mgr-approvals", label: "Approvals", href: "/manager/approvals", icon: CheckSquare, roles: ["MANAGER", "ADMIN"] },
   { id: "mgr-team", label: "My Team", href: "/manager/team", icon: Users, roles: ["MANAGER", "ADMIN"] },
   { id: "mgr-analytics", label: "Manager Analytics", href: "/manager/analytics", icon: TrendingUp, roles: ["MANAGER", "ADMIN"] },
-  { id: "admin-dash", label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["ADMIN"] },
+  { id: "admin-dash", label: NAV_LABELS.intelligence.home, href: "/admin", icon: LayoutDashboard, roles: ["ADMIN"] },
   { id: "admin-users", label: "Users", href: "/admin/users", icon: Users, roles: ["ADMIN"] },
   { id: "admin-depts", label: "Departments", href: "/admin/departments", icon: Building2, roles: ["ADMIN"] },
   { id: "admin-audit", label: "Audit Log", href: "/admin/audit-log", icon: FileText, roles: ["ADMIN"] },
   { id: "mgr-activity", label: "Activity Center", href: "/manager/activity", icon: Activity, roles: ["MANAGER"] },
   { id: "admin-activity", label: "Activity Center", href: "/admin/activity", icon: Activity, roles: ["ADMIN"] },
-  { id: "admin-analytics", label: "Executive Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN"] },
-  { id: "admin-briefing", label: "Executive Briefing", href: "/admin/briefing", icon: Sparkles, keywords: "briefing boardroom war room presentation executive narrative", roles: ["ADMIN"] },
-  { id: "admin-command", label: "Command Center", href: "/admin/command-center", icon: Radio, keywords: "live operations command center war room realtime", roles: ["ADMIN"] },
-  { id: "admin-collab", label: "Collaboration Spaces", href: "/admin/collaboration", icon: MessageSquare, keywords: "collaboration initiative rooms discussion", roles: ["ADMIN"] },
-  { id: "admin-alignment", label: "Alignment Graph", href: "/admin/alignment", icon: BarChart3, keywords: "alignment graph strategic dependencies", roles: ["ADMIN"] },
-  { id: "admin-forecast", label: "Predictive Forecast", href: "/admin/forecast", icon: TrendingUp, keywords: "predict forecast risk simulation", roles: ["ADMIN"] },
+  { id: "admin-analytics", label: NAV_LABELS.intelligence.analytics, href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN"] },
+  { id: "admin-briefing", label: NAV_LABELS.intelligence.briefing, href: "/admin/briefing", icon: Sparkles, keywords: "briefing boardroom war room presentation executive narrative", roles: ["ADMIN"] },
+  { id: "admin-command", label: NAV_LABELS.intelligence.commandCenter, href: "/admin/command-center", icon: Radio, keywords: "live operations command center war room realtime", roles: ["ADMIN"] },
+  { id: "admin-collab", label: NAV_LABELS.intelligence.collaboration, href: "/admin/collaboration", icon: MessageSquare, keywords: "collaboration initiative rooms discussion", roles: ["ADMIN"] },
+  { id: "admin-alignment", label: NAV_LABELS.intelligence.alignment, href: "/admin/alignment", icon: BarChart3, keywords: "alignment graph strategic dependencies", roles: ["ADMIN"] },
+  { id: "admin-forecast", label: NAV_LABELS.intelligence.forecast, href: "/admin/forecast", icon: TrendingUp, keywords: "predict forecast risk simulation", roles: ["ADMIN"] },
   { id: "admin-escalations", label: "Escalations", href: "/admin/escalations", icon: AlertTriangle, roles: ["ADMIN"] },
   { id: "admin-cycles", label: "Cycles", href: "/admin/cycles", icon: Calendar, roles: ["ADMIN"] },
   { id: "admin-shared", label: "Push Shared Goals", href: "/admin/shared-goals", icon: Share2, roles: ["ADMIN"] },
-  { id: "admin-executive", label: "Executive Intelligence", href: "/admin/executive", icon: BarChart3, keywords: "executive health", roles: ["ADMIN"] },
+  { id: "admin-executive", label: NAV_LABELS.intelligence.executive, href: "/admin/executive", icon: BarChart3, keywords: "executive health organizational pulse", roles: ["ADMIN"] },
   { id: "admin-observability", label: "Observability", href: "/admin/observability", icon: Activity, roles: ["ADMIN"] },
   { id: "admin-automation", label: "Automation", href: "/admin/automation", icon: Zap, roles: ["ADMIN"] },
 ];
@@ -102,12 +103,12 @@ const QUICK_ACTIONS: Array<{
   { id: "push-shared", label: "Push Shared Goal", href: "/admin/shared-goals", icon: Share2, roles: ["ADMIN"] },
   { id: "approve", label: "Approve Pending Sheets", href: "/manager/approvals", icon: CheckSquare, roles: ["MANAGER", "ADMIN"] },
   { id: "audit", label: "Open Audit Logs", href: "/admin/audit-log", icon: Shield, roles: ["ADMIN"] },
-  { id: "exec-dash", label: "Open Executive Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["ADMIN"] },
-  { id: "analytics", label: "Open Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN", "MANAGER"] },
+  { id: "exec-dash", label: "Open Executive Intelligence Center", href: "/admin/executive", icon: LayoutDashboard, roles: ["ADMIN"] },
+  { id: "analytics", label: "Open Operational Intelligence", href: "/admin/analytics", icon: BarChart3, roles: ["ADMIN", "MANAGER"] },
   { id: "create-user", label: "Create User", href: "/admin/users", icon: Users, roles: ["ADMIN"] },
   { id: "create-cycle", label: "Create Cycle", href: "/admin/cycles", icon: Calendar, roles: ["ADMIN"] },
   { id: "judge-demo", label: "Start judge demo tour", href: "/admin/briefing", icon: Sparkles, roles: ["ADMIN", "MANAGER"] },
-  { id: "open-copilot", label: "Open AI Copilot", href: "#copilot", icon: Bot, roles: ["ADMIN", "MANAGER"] },
+  { id: "open-copilot", label: `Open ${PRODUCT.copilotName}`, href: "#copilot", icon: Bot, roles: ["ADMIN", "MANAGER"] },
 ];
 
 function loadRecent(): SearchResult[] {

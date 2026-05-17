@@ -15,8 +15,12 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal",
-  description: "AtomQuest goal setting and tracking portal",
+  title: {
+    default: process.env.NEXT_PUBLIC_APP_NAME ?? "AtomQuest",
+    template: `%s · ${process.env.NEXT_PUBLIC_APP_NAME ?? "AtomQuest"}`,
+  },
+  description:
+    "AI-powered organizational intelligence operating system — predict, align, and execute strategically.",
 };
 
 export default function RootLayout({

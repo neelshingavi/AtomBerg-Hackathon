@@ -27,7 +27,7 @@ export function OnboardingChecklist() {
         <Card className="border-brand-500/20 shadow-xl">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
             <div>
-              <CardTitle className="text-sm font-semibold">Getting started</CardTitle>
+              <CardTitle className="text-sm font-semibold">Judge demo journey</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {demo.onboardingProgress}% complete
               </p>

@@ -22,6 +22,7 @@ import { SUGGESTED_PROMPTS } from "@/lib/ai/query-router";
 import { useCurrentCycle } from "@/hooks/useCurrentCycle";
 import type { CopilotResponse } from "@/lib/intelligence/types";
 import { cn } from "@/lib/utils";
+import { PRODUCT } from "@/lib/brand";
 
 type Message = {
   id: string;
@@ -97,7 +98,8 @@ export function AtomCopilot() {
             msg.id === assistantId
               ? {
                   ...msg,
-                  content: "Unable to analyze organizational data. Please try again.",
+                  content:
+                    "Unable to synthesize operational intelligence at this moment. Please retry.",
                 }
               : msg
           )
@@ -121,7 +123,7 @@ export function AtomCopilot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-cyan-500 text-white shadow-2xl shadow-brand-500/30 hover:scale-105 transition-transform"
-            aria-label="Open Atom AI Copilot"
+            aria-label={`Open ${PRODUCT.copilotName}`}
             onClick={() => setOpen(true)}
           >
             <Sparkles className="h-6 w-6" />
@@ -146,8 +148,8 @@ export function AtomCopilot() {
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
                 <div>
-                  <p className="text-sm font-semibold">Atom AI Copilot</p>
-                  <p className="text-[10px] text-white/80">Organizational intelligence</p>
+                  <p className="text-sm font-semibold">{PRODUCT.copilotName}</p>
+                  <p className="text-[10px] text-white/80">Executive strategy advisor</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -178,8 +180,8 @@ export function AtomCopilot() {
                   {messages.length === 0 && (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        Ask about organization health, risks, escalations, and leadership priorities.
-                        Answers use live data from your performance cycle.
+                        Strategic advisor for organizational execution — risks, alignment,
+                        escalations, and leadership interventions. Powered by live cycle intelligence.
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {SUGGESTED_PROMPTS.slice(0, 5).map((p) => (
@@ -219,7 +221,7 @@ export function AtomCopilot() {
                     ) && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="animate-pulse">Analyzing organizational data…</span>
+                      <span className="animate-pulse">Synthesizing operational intelligence…</span>
                     </div>
                   )}
                 </div>
@@ -234,7 +236,7 @@ export function AtomCopilot() {
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask Atom AI…"
+                    placeholder="Ask your strategic advisor…"
                     disabled={loading}
                     className="flex-1"
                     aria-label="Copilot message"
@@ -291,7 +293,7 @@ function CopilotResponseDetail({ response }: { response: CopilotResponse }) {
       {response.recommendations.length > 0 && (
         <div className="flex items-start gap-1 text-brand-700">
           <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-          <span>{response.recommendations[0]}</span>
+          <span>Leadership action → {response.recommendations[0]}</span>
         </div>
       )}
     </div>

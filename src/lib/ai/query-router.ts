@@ -131,16 +131,15 @@ export function classifyQuery(message: string): QueryIntent {
 }
 
 export const SUGGESTED_PROMPTS = [
-  "Summarize organization health",
-  "Which departments are underperforming?",
-  "Why are escalations increasing?",
-  "Which managers need intervention?",
-  "Show organization risks",
-  "What requires leadership attention?",
-  "Show execution bottlenecks",
-  "What changed this week?",
-  "Why is Engineering at risk?",
-  "Show dependency bottlenecks",
-  "Which managers affect Revenue Growth?",
-  "Give me the executive briefing for this cycle",
+  "What is our organizational pulse and strategic risk posture?",
+  "Which departments threaten quarterly execution targets?",
+  "Explain escalation trends and their business impact",
+  "Which managers require leadership intervention this week?",
+  "What operational risks require executive attention now?",
+  "Show execution bottlenecks affecting strategic alignment",
+  "What changed in organizational health this week?",
+  "Why is Engineering at risk — and what is the downstream impact?",
+  "Map dependency bottlenecks across strategic initiatives",
+  "Which leaders affect Revenue Growth initiative outcomes?",
+  "Generate an executive briefing for leadership review",
 ];

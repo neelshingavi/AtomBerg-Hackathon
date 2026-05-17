@@ -35,8 +35,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePendingApprovalsCount } from "@/hooks/useGoals";
+import { NAV_LABELS, PRODUCT } from "@/lib/brand";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; badge?: number };
+
+type NavSection = { title: string; items: NavItem[] };
 
 export function Sidebar({
   onNavigate,
@@ -51,52 +54,63 @@ export function Sidebar({
   const { data: pendingCount } = usePendingApprovalsCount();
 
   const employeeNav: NavItem[] = [
-    { href: "/employee", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/employee/goals", label: "My Goals", icon: Target },
-    { href: "/employee/checkins", label: "Check-ins", icon: ClipboardCheck },
-    { href: "/employee/shared-goals", label: "Shared Goals", icon: Share2 },
-    { href: "/notifications", label: "Inbox", icon: Bell },
+    { href: "/employee", label: NAV_LABELS.employee.home, icon: LayoutDashboard },
+    { href: "/employee/goals", label: NAV_LABELS.employee.goals, icon: Target },
+    { href: "/employee/checkins", label: NAV_LABELS.employee.checkins, icon: ClipboardCheck },
+    { href: "/employee/shared-goals", label: NAV_LABELS.employee.shared, icon: Share2 },
+    { href: "/notifications", label: NAV_LABELS.employee.inbox, icon: Bell },
   ];
 
   const managerNav: NavItem[] = [
-    { href: "/manager", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/manager", label: NAV_LABELS.manager.home, icon: LayoutDashboard },
     {
       href: "/manager/approvals",
-      label: "Approvals",
+      label: NAV_LABELS.manager.approvals,
       icon: CheckSquare,
       badge: pendingCount,
     },
-    { href: "/manager/team", label: "My Team", icon: Users },
-    { href: "/manager/activity", label: "Activity Center", icon: Activity },
-    { href: "/manager/analytics", label: "Analytics", icon: TrendingUp },
-    { href: "/manager/shared-goals", label: "Push Shared Goals", icon: Share2 },
-    { href: "/notifications", label: "Inbox", icon: Bell },
+    { href: "/manager/team", label: NAV_LABELS.manager.team, icon: Users },
+    { href: "/manager/activity", label: NAV_LABELS.manager.activity, icon: Activity },
+    { href: "/manager/analytics", label: NAV_LABELS.manager.analytics, icon: TrendingUp },
+    { href: "/manager/shared-goals", label: NAV_LABELS.manager.shared, icon: Share2 },
+    { href: "/notifications", label: NAV_LABELS.manager.inbox, icon: Bell },
   ];
 
-  const adminNav: NavItem[] = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/executive", label: "Executive", icon: Brain },
-    { href: "/admin/briefing", label: "Executive Briefing", icon: Sparkles },
-    { href: "/admin/command-center", label: "Command Center", icon: Radio },
-    { href: "/admin/collaboration", label: "Collaboration", icon: MessageSquare },
-    { href: "/admin/alignment", label: "Alignment Graph", icon: Network },
-    { href: "/admin/forecast", label: "Predictive Forecast", icon: TrendingUp },
-    { href: "/admin/shared-goals", label: "Shared Goals", icon: Share2 },
-    { href: "/admin/users", label: "Users", icon: Users },
-    { href: "/admin/activity", label: "Activity Center", icon: Activity },
-    { href: "/admin/departments", label: "Departments", icon: Building2 },
-    { href: "/admin/thrust-areas", label: "Thrust Areas", icon: Layers },
-    { href: "/admin/cycles", label: "Cycles", icon: Calendar },
-    { href: "/admin/reports/achievement", label: "Achievement Report", icon: BarChart3 },
-    { href: "/admin/reports/completion", label: "Completion", icon: ClipboardList },
-    { href: "/admin/analytics", label: "Analytics", icon: TrendingUp },
-    { href: "/admin/escalations", label: "Escalations", icon: AlertTriangle },
-    { href: "/admin/automation", label: "Automation", icon: Zap },
-    { href: "/admin/observability", label: "Observability", icon: Gauge },
-    { href: "/admin/architecture", label: "Architecture", icon: Network },
-    { href: "/admin/settings", label: "Integrations", icon: Settings },
-    { href: "/admin/audit-log", label: "Audit Log", icon: FileText },
-    { href: "/notifications", label: "Inbox", icon: Bell },
+  const intelligenceNav: NavItem[] = [
+    { href: "/admin/executive", label: NAV_LABELS.intelligence.executive, icon: Brain },
+    { href: "/admin/briefing", label: NAV_LABELS.intelligence.briefing, icon: Sparkles },
+    { href: "/admin/command-center", label: NAV_LABELS.intelligence.commandCenter, icon: Radio },
+    { href: "/admin/alignment", label: NAV_LABELS.intelligence.alignment, icon: Network },
+    { href: "/admin/forecast", label: NAV_LABELS.intelligence.forecast, icon: TrendingUp },
+    { href: "/admin/collaboration", label: NAV_LABELS.intelligence.collaboration, icon: MessageSquare },
+    { href: "/admin/activity", label: NAV_LABELS.intelligence.activity, icon: Activity },
+    { href: "/admin/analytics", label: NAV_LABELS.intelligence.analytics, icon: BarChart3 },
+    { href: "/admin/escalations", label: NAV_LABELS.intelligence.escalations, icon: AlertTriangle },
+  ];
+
+  const administrationNav: NavItem[] = [
+    { href: "/admin", label: NAV_LABELS.intelligence.home, icon: LayoutDashboard },
+    { href: "/admin/users", label: NAV_LABELS.administration.users, icon: Users },
+    { href: "/admin/departments", label: NAV_LABELS.administration.departments, icon: Building2 },
+    { href: "/admin/thrust-areas", label: NAV_LABELS.administration.thrustAreas, icon: Layers },
+    { href: "/admin/cycles", label: NAV_LABELS.administration.cycles, icon: Calendar },
+    { href: "/admin/shared-goals", label: NAV_LABELS.administration.shared, icon: Share2 },
+    {
+      href: "/admin/reports/achievement",
+      label: NAV_LABELS.administration.achievement,
+      icon: BarChart3,
+    },
+    {
+      href: "/admin/reports/completion",
+      label: NAV_LABELS.administration.completion,
+      icon: ClipboardList,
+    },
+    { href: "/admin/automation", label: NAV_LABELS.administration.automation, icon: Zap },
+    { href: "/admin/observability", label: NAV_LABELS.administration.observability, icon: Gauge },
+    { href: "/admin/architecture", label: NAV_LABELS.administration.architecture, icon: Network },
+    { href: "/admin/settings", label: NAV_LABELS.administration.integrations, icon: Settings },
+    { href: "/admin/audit-log", label: NAV_LABELS.administration.audit, icon: FileText },
+    { href: "/notifications", label: NAV_LABELS.administration.inbox, icon: Bell },
   ];
 
   function renderNav(items: NavItem[]) {
@@ -131,7 +145,7 @@ export function Sidebar({
                   active ? "text-white" : "group-hover:scale-110"
                 )}
               />
-              <span className="relative z-10 flex-1">{item.label}</span>
+              <span className="relative z-10 flex-1 leading-tight">{item.label}</span>
               {item.badge != null && item.badge > 0 && (
                 <Badge
                   variant="secondary"
@@ -147,6 +161,22 @@ export function Sidebar({
     );
   }
 
+  function renderSection(section: NavSection) {
+    return (
+      <div>
+        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
+          {section.title}
+        </p>
+        {renderNav(section.items)}
+      </div>
+    );
+  }
+
+  const adminSections: NavSection[] = [
+    { title: "Organizational Intelligence", items: intelligenceNav },
+    { title: "Platform Administration", items: administrationNav },
+  ];
+
   return (
     <aside
       className={cn(
@@ -160,11 +190,9 @@ export function Sidebar({
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div>
-            <p className="text-base font-bold tracking-tight text-white">
-              {process.env.NEXT_PUBLIC_APP_NAME ?? "AtomGoal"}
-            </p>
+            <p className="text-base font-bold tracking-tight text-white">{PRODUCT.name}</p>
             <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-muted">
-              Performance OS
+              {PRODUCT.tagline}
             </p>
           </div>
         </div>
@@ -182,7 +210,7 @@ export function Sidebar({
         {(role === "EMPLOYEE" || role === "MANAGER" || role === "ADMIN") && (
           <div>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
-              Employee
+              Workforce Layer
             </p>
             {renderNav(employeeNav)}
           </div>
@@ -191,20 +219,16 @@ export function Sidebar({
         {(role === "MANAGER" || role === "ADMIN") && (
           <div>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
-              Manager
+              Leadership Layer
             </p>
             {renderNav(managerNav)}
           </div>
         )}
 
-        {role === "ADMIN" && (
-          <div>
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">
-              Admin
-            </p>
-            {renderNav(adminNav)}
-          </div>
-        )}
+        {role === "ADMIN" &&
+          adminSections.map((section) => (
+            <div key={section.title}>{renderSection(section)}</div>
+          ))}
       </div>
 
       <div className="border-t border-sidebar-border p-3">

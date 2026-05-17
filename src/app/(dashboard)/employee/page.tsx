@@ -135,7 +135,7 @@ export default async function EmployeeDashboard() {
 
   return (
     <>
-      <Topbar title="Dashboard" />
+      <Topbar title="Execution Hub" />
       <PageContainer>
         <EmployeeDashboardView
           firstName={session.user.name?.split(" ")[0] ?? "there"}

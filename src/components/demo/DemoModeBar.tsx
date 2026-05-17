@@ -15,9 +15,9 @@ export function DemoModeBar() {
     <div className="flex items-center justify-between gap-3 border-b border-brand-500/20 bg-gradient-to-r from-brand-500/10 via-cyan-500/5 to-transparent px-4 py-2">
       <div className="flex items-center gap-2 text-xs font-medium text-brand-800">
         <Presentation className="h-4 w-4" />
-        <span>Demo Mode</span>
+        <span>Presentation Mode</span>
         <span className="hidden text-muted-foreground sm:inline">
-          — One-click role switching for live presentations
+          — Judge flow · role switching · demo-safe fallbacks active
         </span>
       </div>
       <div className="flex items-center gap-2">

@@ -2,9 +2,18 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function PageLoadingShell({ title = true }: { title?: boolean }) {
+export function PageLoadingShell({
+  title = true,
+  label = "Loading operational intelligence…",
+}: {
+  title?: boolean;
+  label?: string;
+}) {
   return (
-    <div className="space-y-6 p-4 sm:p-6" aria-busy aria-label="Loading page">
+    <div className="space-y-6 p-4 sm:p-6" aria-busy aria-label={label}>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground animate-pulse">
+        {label}
+      </p>
       {title && (
         <div className="space-y-2">
           <Skeleton className="h-8 w-64 skeleton-shimmer" />
